@@ -1,0 +1,21 @@
+# Node and dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Local Flowise data
+.flowise/
+flowise.db
+flowise-storage/
+
+# Environment files
+.env
+.env.*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.pid
+*.log

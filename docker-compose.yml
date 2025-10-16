@@ -1,0 +1,14 @@
+services:
+  flowise:
+    image: flowiseai/flowise:latest
+    container_name: cando-ai-chatbot
+    restart: always
+    ports:
+      - "8090:3000"
+    env_file:
+      - .env
+    volumes:
+      - ~/.flowise:/root/.flowise
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
