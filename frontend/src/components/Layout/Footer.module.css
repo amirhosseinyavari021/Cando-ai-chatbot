@@ -1,0 +1,22 @@
+.footer {
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  border-top: 1px solid #333;
+  padding: 1.5rem 0;
+  margin-top: auto; /* Pushes footer to the bottom */
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.footer p {
+  margin-bottom: 0.5rem;
+}
+
+.footer p:last-child {
+  margin-bottom: 0;
+}
+
+.yellowText {
+  color: var(--brand-yellow);
+  font-weight: 700; /* 'bold' is already applied by <strong> */
+}
