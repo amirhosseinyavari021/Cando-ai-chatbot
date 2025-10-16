@@ -1,5 +1,5 @@
 import express from 'express';
-// Make sure these paths are correct
+// FIX: Ensure this path and filename casing is EXACTLY correct.
 import { addFaq, getFaqs } from '../controllers/adminController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 

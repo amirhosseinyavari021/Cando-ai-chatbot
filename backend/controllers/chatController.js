@@ -1,11 +1,7 @@
 import asyncHandler from 'express-async-handler';
-import { routeRequestToAI } from '../../ai/adapters/aiRouter.js';
+// FIX: The path is now one level up, not two.
+import { routeRequestToAI } from '../ai/adapters/aiRouter.js';
 
-/**
- * @desc    Process a user's chat message
- * @route   POST /api/chat
- * @access  Public
- */
 const processMessage = asyncHandler(async (req, res) => {
   const { prompt, imageUrl, userId } = req.body;
 
@@ -23,11 +19,10 @@ const processMessage = asyncHandler(async (req, res) => {
   if (result.success) {
     res.status(200).json(result);
   } else {
-    // The AI router already provides a user-friendly generic message
     res.status(503).json({
       success: false,
       message: result.response,
-      error: result.error, // For internal logging, not necessarily for the user
+      error: result.error,
     });
   }
 });
