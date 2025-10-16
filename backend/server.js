@@ -4,6 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
+// This import will now work because logger.js will initialize without errors
 import { requestDetailsLogger } from './middleware/logger.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import chatRoutes from './routes/chatRoutes.js';
@@ -13,7 +14,6 @@ import logRoutes from './routes/logRoutes.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from a .env file in the current directory
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 connectDB();
