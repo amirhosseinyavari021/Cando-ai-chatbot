@@ -5,11 +5,18 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import { requestDetailsLogger } from './middleware/logger.js';
-// This line must match the filename exactly
 import { notFound, errorHandler } from './middleware/errorHandler.js';
+
+// --- FIX THIS SECTION ---
+// The import paths below MUST EXACTLY match your filenames, including capitalization.
+// If your files are named, for example, ChatRoutes.js, AdminRoutes.js, etc.,
+// you must use that exact capitalization here.
+
 import chatRoutes from './routes/chatRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import logRoutes from './routes/logRoutes.js';
+// --- END FIX SECTION ---
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
