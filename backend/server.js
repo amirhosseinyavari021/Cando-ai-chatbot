@@ -4,8 +4,8 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
-// This import will now work because logger.js will initialize without errors
 import { requestDetailsLogger } from './middleware/logger.js';
+// This line must match the filename exactly
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import chatRoutes from './routes/chatRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
