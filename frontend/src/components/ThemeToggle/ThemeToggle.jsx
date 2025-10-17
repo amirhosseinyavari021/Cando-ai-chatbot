@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
+// این خط به فایل CSS که اکنون ایجاد کردید اشاره دارد
 import styles from './ThemeToggle.module.css';
 
 const ThemeToggle = () => {
