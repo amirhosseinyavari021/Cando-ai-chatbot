@@ -1,10 +1,14 @@
 {
-  "navbar_title": "چت‌بات کندو",
+  "navbar_title": "چت‌ بات کندو",
   "chat_placeholder": "در مورد دوره‌ها، برنامه‌ها، یا مشاوره در کندو بپرسید...",
   "chat_send_button": "ارسال",
   "footer_created_by_part1": "طراحی و ساخته شده توسط",
   "footer_created_by_part2": "برای",
   "footer_dedicated_to_part1": "این سرویس کاملا اختصاصی برای",
   "name_amirhossein": "امیرحسین یاری",
-  "name_cando": "آکادمی کندو"
+  "name_cando": "آکادمی کندو",
+  "suggested_questions_title": "یا یکی از این سوالات را امتحان کنید:",
+  "prompt1": "چه دوره هایی ارائه می دهید؟",
+  "prompt2": "چطور می توانم ثبت نام کنم؟",
+  "prompt3": "آدرس اکادمی کندو کجاست؟"
 }

@@ -1,36 +1,33 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-// Import our new API service
 import { sendChatMessage } from '../../api';
 import { Send, Loader2 } from 'lucide-react';
 import styles from './ChatBox.module.css';
 import MessageBubble from './MessageBubble';
+import SuggestedPrompts from './SuggestedPrompts'; // <-- 1. ایمپورت کامپوننت جدید
 
 const ChatBox = () => {
   const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null); // To auto-scroll to bottom
+  const messagesEndRef = useRef(null);
 
-  // Auto-scroll logic
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  // 2. این تابع اصلاح شد تا متن پرامپت را به عنوان ورودی بگیرد
+  const handleSubmit = async (promptText) => {
+    if (!promptText.trim() || isLoading) return;
 
-    const userMessage = { sender: 'user', text: input };
+    const userMessage = { sender: 'user', text: promptText };
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    setInput(''); // ورودی را همیشه پاک کن
     setIsLoading(true);
 
     try {
-      // Use our new function for the API call
-      const res = await sendChatMessage(input);
-
+      const res = await sendChatMessage(promptText); // از متنی که دریافت کرده استفاده کن
       const botMessage = { sender: 'bot', text: res.data.response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -46,9 +43,25 @@ const ChatBox = () => {
     }
   };
 
+  // 3. یک تابع جدا برای ارسال فرم
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    handleSubmit(input);
+  };
+
+  // 4. تابع جدید برای کلیک روی سوالات پیشنهادی
+  const handleSuggestionClick = (prompt) => {
+    handleSubmit(prompt);
+  };
+
   return (
     <div className={styles.chatContainer}>
       <div className={styles.messageList}>
+        {/* 5. نمایش سوالات پیشنهادی فقط اگر پیامی وجود ندارد */}
+        {messages.length === 0 && !isLoading && (
+          <SuggestedPrompts onPromptClick={handleSuggestionClick} />
+        )}
+
         {messages.map((msg, index) => (
           <MessageBubble key={index} message={msg} />
         ))}
@@ -61,11 +74,12 @@ const ChatBox = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className={styles.inputForm}>
+      <form onSubmit={handleFormSubmit} className={styles.inputForm}>
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.g.target.value)}
+          // 6. رفع باگ: e.g.target.value به e.target.value تغییر کرد
+          onChange={(e) => setInput(e.target.value)}
           placeholder={t('chat_placeholder')}
           className={styles.inputField}
           disabled={isLoading}

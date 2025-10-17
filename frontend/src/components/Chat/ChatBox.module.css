@@ -1,16 +1,22 @@
 .chatContainer {
-  flex: 1; /* Takes up all available vertical space */
+  flex: 1;
+  /* این اجازه می‌دهد در صورت نیاز رشد کند */
   display: flex;
   flex-direction: column;
-  max-width: 900px;
-  width: 100%;
-  margin: 1.5rem auto;
+  max-width: 700px;
+  /* برای حس جمع و جور بودن، عرض کمی کمتر شد */
+  width: 90%;
+  /* برای نمایش در صفحات کوچکتر */
+  margin: 2rem auto;
+  /* در دسکتاپ، بالا و پایین فاصله دارد و در مرکز است */
   background-color: var(--surface);
   border: 1px solid #333;
   border-radius: 12px;
   overflow: hidden;
-  /* Mobile-first: full height/width on small screens */
-  height: calc(100vh - 150px); /* Full height minus nav and footer (approx) */
+  max-height: 75vh;
+  /* ارتفاع ماکسیمم دارد تا کل صفحه را نگیرد */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  /* کمی سایه برای جذابیت */
 }
 
 .messageList {
@@ -39,6 +45,8 @@
   font-size: 1rem;
   outline: none;
   transition: border-color 0.2s ease;
+  font-family: inherit;
+  /* ارث‌بری فونت برای فارسی */
 }
 
 .inputField:focus {
@@ -57,6 +65,7 @@
   border-radius: 8px;
   padding: 0.75rem;
   margin-left: 0.5rem;
+  /* برای نسخه فارسی هم کار می‌کند */
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -90,17 +99,24 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
 
-/* Responsive adjustments for mobile */
+/* در موبایل، به حالت تمام صفحه برمی‌گردد */
 @media (max-width: 768px) {
   .chatContainer {
     margin: 0;
     border: none;
     border-radius: 0;
-    height: calc(100vh - 120px); /* Adjust based on mobile nav/footer */
+    width: 100%;
+    /* تمام عرض */
+    max-height: none;
+    /* ارتفاع ماکسیمم نامحدود */
+    height: calc(100vh - 120px);
+    /* ارتفاع کامل (منهای نوبار و فوتر) */
+    box-shadow: none;
   }
 }
