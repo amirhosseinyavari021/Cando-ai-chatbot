@@ -12,6 +12,7 @@ export const routeRequestToAI = async ({ prompt, imageUrl, userId = 'anonymous' 
 
   // 1. Image Processing Route (Unchanged)
   if (imageUrl) {
+    // ... (منطق پردازش تصویر اینجا)
     try {
       const response = await queryLiaraVision(imageUrl, prompt);
       await createLogEntry({ userId, requestType: 'IMAGE', modelUsed: 'LIARA', status: 'SUCCESS', prompt: `${prompt} [Image: ${imageUrl}]`, response, latency: Date.now() - startTime });
@@ -23,22 +24,22 @@ export const routeRequestToAI = async ({ prompt, imageUrl, userId = 'anonymous' 
   }
 
   // --- START OF MODIFICATION ---
-  // 2. Text Processing Route (Forcing Liara as primary for testing)
-  console.log('Routing text request directly to Liara (Ollama temporarily bypassed).');
+  // 2. Text Processing Route (Forcing Liara as primary)
+  console.log('Routing text request directly to Liara (Ollama bypassed).');
   try {
     const response = await queryLiaraText(prompt);
     await createLogEntry({
       userId,
       requestType: 'TEXT',
       modelUsed: 'LIARA',
-      status: 'SUCCESS', // No longer a fallback
+      status: 'SUCCESS',
       prompt,
       response,
       latency: Date.now() - startTime
     });
     return { success: true, response, model: 'LIARA', fallback: false };
   } catch (liaraError) {
-    console.error(`FATAL: Liara (primary) failed. Error: ${liaraError.message}`);
+    console.error(`FATAL: Liara failed. Error: ${liaraError.message}`);
     await createLogEntry({
       userId,
       requestType: 'TEXT',
@@ -55,24 +56,4 @@ export const routeRequestToAI = async ({ prompt, imageUrl, userId = 'anonymous' 
     };
   }
   // --- END OF MODIFICATION ---
-
-
-  /* --- ORIGINAL OLLAMA-FIRST LOGIC (TEMPORARILY DISABLED) ---
-  try {
-    const response = await queryOllama(prompt);
-    await createLogEntry({ userId, requestType: 'TEXT', modelUsed: 'OLLAMA3', status: 'SUCCESS', prompt, response, latency: Date.now() - startTime });
-    return { success: true, response, model: 'OLLAMA3' };
-  } catch (ollamaError) {
-    console.warn(`Primary model failed: ${ollamaError.message}. Attempting fallback.`);
-    try {
-      const response = await queryLiaraText(prompt);
-      await createLogEntry({ userId, requestType: 'TEXT', modelUsed: 'LIARA', status: 'FALLBACK_SUCCESS', prompt, response, errorMessage: `Ollama Error: ${ollamaError.message}`, latency: Date.now() - startTime });
-      return { success: true, response, model: 'LIARA', fallback: true };
-    } catch (liaraError) {
-      console.error(`FATAL: All models failed. Fallback error: ${liaraError.message}`);
-      await createLogEntry({ userId, requestType: 'TEXT', modelUsed: 'NONE', status: 'ERROR', prompt, errorMessage: `Ollama: ${ollamaError.message}, Liara: ${liaraError.message}`, latency: Date.now() - startTime });
-      return { success: false, response: "I'm having some technical difficulties at the moment. Please try again in a few minutes." };
-    }
-  }
-  */
 };

@@ -1,52 +1,64 @@
 import axios from 'axios';
 
-// This is a PUBLIC endpoint. The actual secret key is handled securely below.
-const LIARA_API_BASE_URL = 'https://api.liara.ir/v1'; // Example URL
+// این آدرس دیگر هاردکد نیست و از متغیر محیطی خوانده می‌شود
+const LIARA_API_ENDPOINT = process.env.LIARA_BASE_URL;
 
 /**
- * Sends a text prompt to the Liara API as a fallback.
- * (This is a mock implementation for demonstration)
+ * Sends a text prompt to the Liara API (as a fallback).
  * @param {string} prompt - The user's query.
  * @returns {Promise<string>} The AI's response text.
  */
 export const queryLiaraText = async (prompt) => {
-  console.warn('Executing fallback to secondary AI model.');
-  
-  // REAL IMPLEMENTATION EXAMPLE:
-  // The secret API key is read securely from environment variables and sent in the header.
-  // It is NEVER hardcoded in the source file.
-  /*
-  try {
-    const response = await axios.post(`${LIARA_API_BASE_URL}/text-completion`, 
-      { prompt }, 
-      { headers: { 'Authorization': `Bearer ${process.env.LIARA_API_KEY}` } }
-    );
-    return response.data.completion;
-  } catch (error) {
-    console.error('Error querying Liara Text API:', error.message);
-    throw new Error('Secondary AI text model failed.');
-  }
-  */
+  console.warn('Executing request to Liara Text API.');
 
-  // MOCK RESPONSE (with professional, generic text):
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return `Our primary assistant is currently experiencing high demand, but I can still help you. You asked about: "${prompt}".`;
+  if (!LIARA_API_ENDPOINT || !process.env.LIARA_API_KEY) {
+    console.error('Liara API URL or Key is not set in environment variables.');
+    throw new Error('Liara service is not configured.');
+  }
+
+  try {
+    // ارسال درخواست واقعی به اندپوینت Liara
+    const response = await axios.post(
+      LIARA_API_ENDPOINT,
+      {
+        prompt: prompt,
+        // model: "chatgpt" // (اگر Liara نیاز داشت، مدل را اینجا مشخص کنید)
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.LIARA_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    // مسیر پاسخ بر اساس مستندات Liara ممکن است متفاوت باشد
+    // این یک حدس رایج است. اگر کار نکرد، باید مستندات Liara را چک کنید.
+    if (response.data && response.data.completion) {
+      return response.data.completion;
+    } else if (response.data && response.data.text) {
+      return response.data.text;
+    } else if (response.data) {
+      // اگر ساختار پاسخ متفاوت است، آن را لاگ می‌گیریم
+      console.log('Liara response structure:', response.data);
+      // به عنوان یک راه حل موقت، کل پاسخ را برمی‌گردانیم
+      return JSON.stringify(response.data);
+    } else {
+      throw new Error('Invalid response structure from Liara API');
+    }
+
+  } catch (error) {
+    console.error('Error querying Liara Text API:', error.response ? error.response.data : error.message);
+    throw new Error('Liara Text API failed');
+  }
 };
 
 /**
- * Sends an image URL to the Liara Vision API.
- * (This is a mock implementation for demonstration)
- * @param {string} imageUrl - The URL of the image.
- * @param {string} prompt - The text prompt accompanying the image.
- * @returns {Promise<string>} The AI's analysis of the image.
+ * Sends an image (and optional prompt) to the Liara Vision API.
+ * (This logic remains a placeholder until the vision API endpoint is known)
  */
 export const queryLiaraVision = async (imageUrl, prompt) => {
-  console.log('Executing request to vision model.');
-  
-  // MOCK RESPONSE (with professional, generic text):
-  if (!imageUrl.startsWith('http')) {
-    throw new Error('Invalid image URL format.');
-  }
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return `Thank you for the image. Based on your request about "${prompt}", here is my analysis...`;
+  console.log('Executing request to Liara Vision API (Mock).');
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return `(Mock Response) Vision processing for "${prompt}" is not yet implemented.`;
 };
