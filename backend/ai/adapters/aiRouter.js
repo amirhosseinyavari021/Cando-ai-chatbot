@@ -1,9 +1,5 @@
 import { queryOllama } from './ollamaAdapter.js';
 import { queryLiaraText, queryLiaraVision } from './liaraAdapter.js';
-
-// --- THIS IS THE FIX ---
-// The path must go up two levels: from 'adapters' -> 'ai' -> 'backend'
-// Change '../middleware/logger.js' to '../../middleware/logger.js'
 import { createLogEntry } from '../../middleware/logger.js';
 
 /**
@@ -14,7 +10,7 @@ import { createLogEntry } from '../../middleware/logger.js';
 export const routeRequestToAI = async ({ prompt, imageUrl, userId = 'anonymous' }) => {
   const startTime = Date.now();
 
-  // 1. Image Processing Route
+  // 1. Image Processing Route (Unchanged)
   if (imageUrl) {
     try {
       const response = await queryLiaraVision(imageUrl, prompt);
@@ -22,11 +18,46 @@ export const routeRequestToAI = async ({ prompt, imageUrl, userId = 'anonymous' 
       return { success: true, response, model: 'LIARA' };
     } catch (error) {
       await createLogEntry({ userId, requestType: 'IMAGE', modelUsed: 'LIARA', status: 'ERROR', prompt: `${prompt} [Image: ${imageUrl}]`, errorMessage: error.message, latency: Date.now() - startTime });
-      return { success: false, response: "Currently unable to process images. Please try again with a text-only query." };
+      return { success: false, response: "I'm currently unable to process images. Please try again with a text-only query." };
     }
   }
 
-  // 2. Text Processing Route (Primary: Ollama, Fallback: Liara)
+  // --- START OF MODIFICATION ---
+  // 2. Text Processing Route (Forcing Liara as primary for testing)
+  console.log('Routing text request directly to Liara (Ollama temporarily bypassed).');
+  try {
+    const response = await queryLiaraText(prompt);
+    await createLogEntry({
+      userId,
+      requestType: 'TEXT',
+      modelUsed: 'LIARA',
+      status: 'SUCCESS', // No longer a fallback
+      prompt,
+      response,
+      latency: Date.now() - startTime
+    });
+    return { success: true, response, model: 'LIARA', fallback: false };
+  } catch (liaraError) {
+    console.error(`FATAL: Liara (primary) failed. Error: ${liaraError.message}`);
+    await createLogEntry({
+      userId,
+      requestType: 'TEXT',
+      modelUsed: 'NONE',
+      status: 'ERROR',
+      prompt,
+      errorMessage: `Liara Error: ${liaraError.message}`,
+      latency: Date.now() - startTime
+    });
+    return {
+      success: false,
+      response: "I'm having some technical difficulties at the moment. Please try again in a few minutes.",
+      error: liaraError.message
+    };
+  }
+  // --- END OF MODIFICATION ---
+
+
+  /* --- ORIGINAL OLLAMA-FIRST LOGIC (TEMPORARILY DISABLED) ---
   try {
     const response = await queryOllama(prompt);
     await createLogEntry({ userId, requestType: 'TEXT', modelUsed: 'OLLAMA3', status: 'SUCCESS', prompt, response, latency: Date.now() - startTime });
@@ -43,4 +74,5 @@ export const routeRequestToAI = async ({ prompt, imageUrl, userId = 'anonymous' 
       return { success: false, response: "I'm having some technical difficulties at the moment. Please try again in a few minutes." };
     }
   }
+  */
 };
