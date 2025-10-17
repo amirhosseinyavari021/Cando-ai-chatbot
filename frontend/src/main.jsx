@@ -1,19 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-
-// --- THIS IS THE FIX ---
-// Revert this import to use the .jsx extension, which matches the file's content
-import App from './App.jsx';
-// --- END FIX ---
-
-import './i18n'; // Initialize i18next
-import './index.css'; // Global styles
+import App from './App.jsx'; // قبلاً اصلاح شد به .jsx
+import { ThemeProvider } from './context/ThemeContext'; // <-- ۱. ایمپورت پروایدر
+import './i18n';
+import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      {/* ۲. قرار دادن اپ در پروایدر */}
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>,
 );

@@ -1,8 +1,9 @@
 .navbar {
   background-color: var(--surface);
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border-color);
   padding: 0.75rem 0;
   width: 100%;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .navContent {
@@ -21,7 +22,7 @@
   height: 40px;
   width: 40px;
   object-fit: contain;
-  background-color: #fff; /* Placeholder background for logo */
+  /* حذف بک‌گراند سفید برای سازگاری با تم تاریک */
   border-radius: 8px;
 }
 
@@ -31,16 +32,26 @@
   color: var(--text-primary);
 }
 
+/* بخش جدید برای نگه داشتن هر دو دکمه */
+.controlsArea {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .langToggle {
   background-color: var(--primary);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
+  height: 40px;
+  /* هم‌اندازه با دکمه تم */
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  font-family: inherit;
 }
 
 .langToggle:hover {

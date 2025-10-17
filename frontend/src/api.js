@@ -1,20 +1,15 @@
 import axios from 'axios';
 
-// Get the backend URL from the environment variable we will set on Render
-// VITE_ is a special prefix required by Vite
-const API_URL = process.env.VITE_API_URL || 'http://localhost:5001';
+// این برای استقرار روی Nginx آماده است
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const apiClient = axios.create({
   baseURL: API_URL,
 });
 
-export const sendChatMessage = (prompt, imageUrl = null) => {
+export const sendChatMessage = (prompt, imageBase64 = null) => {
   return apiClient.post('/api/chat', {
     prompt,
-    imageUrl,
-    // userId: '12345' // Later, we can add user ID from auth
+    imageBase64, // ارسال فیلد جدید
   });
 };
-
-// You can add other API calls here later
-// export const getFaqs = () => apiClient.get('/api/admin/faq');
