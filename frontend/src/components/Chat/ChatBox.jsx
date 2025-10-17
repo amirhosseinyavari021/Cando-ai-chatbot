@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
+// Import our new API service
+import { sendChatMessage } from '../../api';
 import { Send, Loader2 } from 'lucide-react';
 import styles from './ChatBox.module.css';
 import MessageBubble from './MessageBubble';
@@ -27,12 +28,8 @@ const ChatBox = () => {
     setIsLoading(true);
 
     try {
-      // API call to our backend.
-      // The '/api' prefix is handled by the Vite proxy.
-      const res = await axios.post('/api/chat', {
-        prompt: input,
-        // userId: '12345' // Later, we can add user ID from auth
-      });
+      // Use our new function for the API call
+      const res = await sendChatMessage(input);
 
       const botMessage = { sender: 'bot', text: res.data.response };
       setMessages((prev) => [...prev, botMessage]);
@@ -63,12 +60,12 @@ const ChatBox = () => {
         )}
         <div ref={messagesEndRef} />
       </div>
-      
+
       <form onSubmit={handleSubmit} className={styles.inputForm}>
         <input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => setInput(e.g.target.value)}
           placeholder={t('chat_placeholder')}
           className={styles.inputField}
           disabled={isLoading}
