@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { sendChatMessage } from '../../api';
-// آیکون‌های جدید برای آپلود و حذف
-import { Send, Loader2, Paperclip, XCircle } from 'lucide-react';
+import { Send, Paperclip, XCircle } from 'lucide-react'; // Loader2 removed
 import styles from './ChatBox.module.css';
 import MessageBubble from './MessageBubble';
 import SuggestedPrompts from './SuggestedPrompts';
@@ -19,10 +18,10 @@ const ChatBox = () => {
   const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [imageBase64, setImageBase64] = useState(null); // State for image
+  const [imageBase64, setImageBase64] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const fileInputRef = useRef(null); // Ref for hidden file input
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -34,7 +33,7 @@ const ChatBox = () => {
     const userMessage = {
       sender: 'user',
       text: promptText,
-      image: imageBase64 // ارسال تصویر به حباب پیام
+      image: imageBase64
     };
     setMessages((prev) => [...prev, userMessage]);
 
@@ -42,7 +41,7 @@ const ChatBox = () => {
     const currentImage = imageBase64;
 
     setInput('');
-    setImageBase64(null); // پاک کردن تصویر
+    setImageBase64(null);
     setIsLoading(true);
 
     try {
@@ -71,15 +70,26 @@ const ChatBox = () => {
     handleSubmit(prompt);
   };
 
-  // مدیریت انتخاب فایل
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const base64 = await toBase64(file);
-      setImageBase64(base64);
+      // Basic size check (e.g., limit to 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Image size exceeds 5MB limit.");
+        e.target.value = null; // Clear the input
+        return;
+      }
+      try {
+        const base64 = await toBase64(file);
+        setImageBase64(base64);
+      } catch (err) {
+        console.error("Error converting file to base64:", err);
+        alert("Failed to process the image file.");
+      }
     }
-    e.target.value = null; // ریست کردن اینپوت فایل
+    e.target.value = null; // Reset file input to allow selecting the same file again
   };
+
 
   return (
     <div className={styles.chatContainer}>
@@ -90,16 +100,20 @@ const ChatBox = () => {
         {messages.map((msg, index) => (
           <MessageBubble key={index} message={msg} />
         ))}
+
+        {/* --- نمایش اندیکاتور لودینگ --- */}
         {isLoading && (
           <div className={styles.typingIndicator}>
-            <Loader2 className={styles.spinner} />
-            <span>CandoBot is typing...</span>
+            <div className={styles.dot}></div>
+            <div className={styles.dot}></div>
+            <div className={styles.dot}></div>
           </div>
         )}
+        {/* --- پایان اندیکاتور لودینگ --- */}
+
         <div ref={messagesEndRef} />
       </div>
 
-      {/* بخش جدید پیش‌نمایش تصویر */}
       {imageBase64 && (
         <div className={styles.imagePreview}>
           <img src={imageBase64} alt="Preview" />
@@ -110,7 +124,6 @@ const ChatBox = () => {
       )}
 
       <form onSubmit={handleFormSubmit} className={styles.inputForm}>
-        {/* اینپوت مخفی فایل */}
         <input
           type="file"
           accept="image/png, image/jpeg"
@@ -118,7 +131,6 @@ const ChatBox = () => {
           onChange={handleFileChange}
           style={{ display: 'none' }}
         />
-        {/* دکمه پیوست کردن */}
         <button
           type="button"
           className={styles.attachButton}
@@ -127,7 +139,6 @@ const ChatBox = () => {
         >
           <Paperclip size={20} />
         </button>
-
         <input
           type="text"
           value={input}

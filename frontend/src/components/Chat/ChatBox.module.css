@@ -10,8 +10,9 @@
   border-radius: 12px;
   overflow: hidden;
   max-height: 80vh;
-  /* کمی ارتفاع بیشتر برای دسکتاپ */
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  /* Transition for theme change */
 }
 
 .messageList {
@@ -21,10 +22,8 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  /* فاصله بیشتر بین پیام‌ها */
 }
 
-/* بخش پیش‌نمایش تصویر */
 .imagePreview {
   position: relative;
   width: 100px;
@@ -55,7 +54,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 0;
+  /* Ensures icon is centered */
 }
+
+.removeImageBtn:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
 
 .inputForm {
   display: flex;
@@ -63,7 +69,8 @@
   padding: 1rem;
   background-color: var(--background);
   align-items: center;
-  /* هم‌ترازی عمودی دکمه‌ها و اینپوت */
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  /* Transition for theme change */
 }
 
 .inputField {
@@ -75,10 +82,10 @@
   padding: 0.75rem 1rem;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+  /* Transition for theme change */
   font-family: inherit;
   margin: 0 0.5rem;
-  /* فاصله بین دکمه‌ها */
 }
 
 .inputField:focus {
@@ -86,7 +93,11 @@
   box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
 }
 
-/* دکمه‌های پیوست و ارسال */
+.inputField::placeholder {
+  color: var(--text-secondary);
+  /* Placeholder color matches theme */
+}
+
 .attachButton,
 .sendButton {
   background-color: transparent;
@@ -104,6 +115,7 @@
 .attachButton:hover {
   color: var(--primary);
   background-color: var(--surface);
+  /* Surface color on hover */
 }
 
 .sendButton {
@@ -121,7 +133,56 @@
   cursor: not-allowed;
 }
 
-/* ... (استایل‌های تایپینگ و مدیا کوئری قبلی) ... */
+/* --- استایل‌های انیمیشن تایپ --- */
+.typingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  /* فاصله بین نقطه‌ها */
+  padding: 0.75rem 1.25rem;
+  /* همانند حباب پیام */
+  color: var(--text-secondary);
+  /* رنگ متن کم‌رنگ تم */
+  align-self: flex-start;
+  /* مثل پیام بات در سمت چپ */
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--text-secondary);
+  /* رنگ نقطه‌ها */
+  /* انیمیشن جهش */
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+/* تاخیر انیمیشن برای هر نقطه */
+.dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+/* تعریف انیمیشن جهش */
+@keyframes bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+
+  40% {
+    transform: scale(1.0);
+  }
+}
+
+/* --- پایان استایل‌های انیمیشن تایپ --- */
+
+
 @media (max-width: 768px) {
   .chatContainer {
     margin: 0;
@@ -130,6 +191,25 @@
     width: 100%;
     max-height: none;
     height: calc(100vh - 120px);
+    /* Adjust based on mobile nav/footer */
     box-shadow: none;
+  }
+
+  .messageList {
+    padding: 1rem;
+    /* Padding less on mobile */
+  }
+
+  .inputForm {
+    padding: 0.75rem;
+  }
+
+  .inputField {
+    padding: 0.6rem 0.8rem;
+  }
+
+  .attachButton,
+  .sendButton {
+    padding: 0.6rem;
   }
 }
