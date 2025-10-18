@@ -1,34 +1,36 @@
 import asyncHandler from 'express-async-handler';
-// مسیر aiRouter اکنون از داخل backend است
 import { routeRequestToAI } from '../ai/adapters/aiRouter.js';
 
 /**
- * @desc    Process a user's chat message (text or image)
+ * @desc    Process a user's text chat message
  * @route   POST /api/chat
- * @access  Public
+ * @access  Public (pending auth implementation)
  */
 const processMessage = asyncHandler(async (req, res) => {
-  // فیلد جدید imageBase64 را از body دریافت می‌کنیم
-  const { prompt, imageBase64, userId } = req.body;
+  // Only expect 'prompt' and optionally 'userId'
+  const { prompt, userId } = req.body;
 
-  if (!prompt && !imageBase64) {
+  // ImageBase64 removed from validation
+  if (!prompt || !prompt.trim()) {
     res.status(400);
-    throw new Error('Prompt or image is required.');
+    throw new Error('Prompt is required.');
   }
 
   const result = await routeRequestToAI({
-    prompt: prompt || 'Please describe this image.', // اگر متنی نبود، یک پرامپت پیش‌فرض می‌دهیم
-    imageBase64, // ارسال تصویر به روتر
+    prompt,
+    // imageBase64 removed
     userId: userId || (req.user ? req.user._id : 'anonymous')
   });
 
   if (result.success) {
     res.status(200).json(result);
   } else {
-    res.status(503).json({
+    // Determine status code based on error type if possible
+    const statusCode = result.error && result.error.includes('unreachable') ? 503 : 500;
+    res.status(statusCode).json({
       success: false,
-      message: result.response,
-      error: result.error,
+      message: result.response, // User-friendly message from aiRouter
+      error: result.error, // Detailed error for logging
     });
   }
 });

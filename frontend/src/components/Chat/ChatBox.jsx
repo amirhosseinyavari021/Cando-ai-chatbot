@@ -1,51 +1,48 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { sendChatMessage } from '../../api';
-import { Send, Paperclip, XCircle } from 'lucide-react'; // Loader2 removed
+// Paperclip and XCircle removed
+import { Send } from 'lucide-react';
 import styles from './ChatBox.module.css';
 import MessageBubble from './MessageBubble';
 import SuggestedPrompts from './SuggestedPrompts';
 
-// Helper function to convert file to base64
-const toBase64 = file => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = () => resolve(reader.result);
-  reader.onerror = reject;
-});
+// toBase64 function removed
 
 const ChatBox = () => {
   const { t } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [imageBase64, setImageBase64] = useState(null);
+  // imageBase64 state removed
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const fileInputRef = useRef(null);
+  // fileInputRef removed
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSubmit = async (promptText) => {
-    if ((!promptText.trim() && !imageBase64) || isLoading) return;
+    // Check only for promptText and isLoading
+    if (!promptText.trim() || isLoading) return;
 
+    // image removed from userMessage
     const userMessage = {
       sender: 'user',
       text: promptText,
-      image: imageBase64
     };
     setMessages((prev) => [...prev, userMessage]);
 
     const currentInput = promptText;
-    const currentImage = imageBase64;
+    // currentImage removed
 
     setInput('');
-    setImageBase64(null);
+    // setImageBase64(null) removed
     setIsLoading(true);
 
     try {
-      const res = await sendChatMessage(currentInput, currentImage);
+      // Call sendChatMessage without image parameter
+      const res = await sendChatMessage(currentInput);
       const botMessage = { sender: 'bot', text: res.data.response };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -70,26 +67,7 @@ const ChatBox = () => {
     handleSubmit(prompt);
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Basic size check (e.g., limit to 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("Image size exceeds 5MB limit.");
-        e.target.value = null; // Clear the input
-        return;
-      }
-      try {
-        const base64 = await toBase64(file);
-        setImageBase64(base64);
-      } catch (err) {
-        console.error("Error converting file to base64:", err);
-        alert("Failed to process the image file.");
-      }
-    }
-    e.target.value = null; // Reset file input to allow selecting the same file again
-  };
-
+  // handleFileChange function removed
 
   return (
     <div className={styles.chatContainer}>
@@ -98,10 +76,10 @@ const ChatBox = () => {
           <SuggestedPrompts onPromptClick={handleSuggestionClick} />
         )}
         {messages.map((msg, index) => (
+          // MessageBubble no longer needs image prop implicitly
           <MessageBubble key={index} message={msg} />
         ))}
 
-        {/* --- نمایش اندیکاتور لودینگ --- */}
         {isLoading && (
           <div className={styles.typingIndicator}>
             <div className={styles.dot}></div>
@@ -109,36 +87,13 @@ const ChatBox = () => {
             <div className={styles.dot}></div>
           </div>
         )}
-        {/* --- پایان اندیکاتور لودینگ --- */}
-
         <div ref={messagesEndRef} />
       </div>
 
-      {imageBase64 && (
-        <div className={styles.imagePreview}>
-          <img src={imageBase64} alt="Preview" />
-          <button onClick={() => setImageBase64(null)} className={styles.removeImageBtn}>
-            <XCircle size={20} />
-          </button>
-        </div>
-      )}
+      {/* Image preview section removed */}
 
       <form onSubmit={handleFormSubmit} className={styles.inputForm}>
-        <input
-          type="file"
-          accept="image/png, image/jpeg"
-          ref={fileInputRef}
-          onChange={handleFileChange}
-          style={{ display: 'none' }}
-        />
-        <button
-          type="button"
-          className={styles.attachButton}
-          onClick={() => fileInputRef.current.click()}
-          disabled={isLoading}
-        >
-          <Paperclip size={20} />
-        </button>
+        {/* File input and attach button removed */}
         <input
           type="text"
           value={input}
@@ -147,7 +102,8 @@ const ChatBox = () => {
           className={styles.inputField}
           disabled={isLoading}
         />
-        <button type="submit" className={styles.sendButton} disabled={isLoading || (!input.trim() && !imageBase64)}>
+        {/* Send button disable logic simplified */}
+        <button type="submit" className={styles.sendButton} disabled={isLoading || !input.trim()}>
           <Send size={20} />
         </button>
       </form>
