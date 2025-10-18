@@ -1,16 +1,19 @@
 import axios from 'axios';
 
-// Ready for Nginx deployment
 const API_URL = import.meta.env.VITE_API_URL || '';
 
 const apiClient = axios.create({
   baseURL: API_URL,
 });
 
-// Removed imageBase64 parameter
-export const sendChatMessage = (prompt) => {
+// Added useQualityModel parameter and cancelToken
+export const sendChatMessage = (prompt, useQualityModel = false, cancelToken) => {
   return apiClient.post('/api/chat', {
     prompt,
-    // imageBase64 removed
+    useQualityModel, // Send the flag to the backend
+  }, {
+    cancelToken: cancelToken
   });
 };
+
+export const createCancelTokenSource = () => axios.CancelToken.source();

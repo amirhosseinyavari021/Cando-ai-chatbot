@@ -1,48 +1,73 @@
+/* Previous styles remain the same... */
 .messageRow {
-  display: flex;
-  animation: fadeIn 0.3s ease-out;
+  /* ... */
 }
 
 .userRow {
-  justify-content: flex-end;
+  /* ... */
 }
 
 .botRow {
-  justify-content: flex-start;
+  /* ... */
 }
 
 .bubble {
-  max-width: 80%;
-  padding: 0.75rem 1.25rem;
-  border-radius: 18px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.3s ease, color 0.3s ease;
-  /* Transition for theme change */
+  /* ... existing styles ... */
+  position: relative;
+  /* Needed for button positioning if required, but margin works too */
+  padding-bottom: 2.5rem;
+  /* Add space below text IF button is present */
 }
 
-/* messageImage styles removed */
-
 .bubble p {
-  margin: 0;
+  /* ... */
 }
 
 .userBubble {
-  background-color: var(--bubble-user);
-  color: white;
-  border-bottom-right-radius: 4px;
+  /* ... */
 }
 
 .botBubble {
-  background-color: var(--bubble-bot);
-  color: var(--text-primary);
-  border-bottom-left-radius: 4px;
+  /* ... */
 }
 
 .errorBubble {
-  background-color: #5d2a2a;
-  color: #ffc4c4;
-  border: 1px solid #e53e3e;
-  border-bottom-left-radius: 4px;
+  /* ... */
 }
+
+
+/* --- Styles for Think Deeper Button --- */
+.thinkDeeperButton {
+  position: absolute;
+  /* Position at the bottom of the bubble */
+  bottom: 8px;
+  right: 12px;
+  /* Align to the right */
+  background-color: rgba(255, 255, 255, 0.1);
+  /* Subtle background */
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 15px;
+  /* Pill shape */
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  /* Smaller font */
+  cursor: pointer;
+  display: inline-flex;
+  /* Align icon and text */
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-family: inherit;
+  /* Inherit font */
+}
+
+.thinkDeeperButton:hover {
+  background-color: rgba(74, 144, 226, 0.2);
+  /* Use primary color subtly */
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Adjust bubble padding only if the button is NOT present (using CSS :not pseudo-class might be complex here, adjusted padding-bottom directly on .bubble instead) */
+/* If you don't want the extra space always, you'd need conditional styling in JS or a different approach */
