@@ -1,22 +1,24 @@
-/* Add Vazir and Inter fonts - این باید خط اول باشد */
+/* Add Vazir and Inter fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Vazirmatn:wght@400;500;700&display=swap');
 
-/* متغیرهای حالت روشن (Light Mode) - پیش‌فرض */
+/* Light Mode Variables - Default */
 :root {
-  --background: #f4f5f7;
-  /* سفید مایل به خاکستری */
+  --background: #f0f2f5;
+  /* Lighter grey background */
   --surface: #ffffff;
-  /* سفید خالص */
+  /* White surface */
   --primary: #4a90e2;
   /* Cando Blue */
   --brand-yellow: #FFD700;
-  --text-primary: #121212;
-  /* متن تیره */
-  --text-secondary: #555555;
+  --brand-yellow-themed: #111111;
+  /* Black text for light mode */
+  --text-primary: #1c1e21;
+  /* Darker text */
+  --text-secondary: #606770;
   --bubble-user: #4a90e2;
-  --bubble-bot: #e9ecef;
-  /* خاکستری خیلی روشن */
-  --border-color: #dee2e6;
+  --bubble-bot: #e4e6eb;
+  /* Lighter bot bubble */
+  --border-color: #d1d5db;
   --font-fa: 'Vazirmatn', sans-serif;
   --font-en: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
@@ -26,15 +28,22 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* متغیرهای حالت تاریک (Dark Mode) */
+/* Dark Mode Variables */
 body[data-theme='dark'] {
-  --background: #1a1a1a;
-  --surface: #242424;
-  --text-primary: #f5f5f5;
-  --text-secondary: #aaaaaa;
+  --background: #18191a;
+  /* Slightly different dark background */
+  --surface: #242526;
+  /* Darker surface */
+  --text-primary: #e4e6eb;
+  /* Lighter text */
+  --text-secondary: #b0b3b8;
   --bubble-user: #4a90e2;
-  --bubble-bot: #3a3a3a;
-  --border-color: #444;
+  /* Keep user bubble blue */
+  --bubble-bot: #3a3f44;
+  /* Darker bot bubble */
+  --border-color: #3e4042;
+  --brand-yellow-themed: var(--brand-yellow);
+  /* Yellow text for dark mode */
 }
 
 html {
@@ -50,12 +59,11 @@ html {
 }
 
 body {
-  /* استفاده از متغیرها */
-  background: var(--background);
+  /* Gradient background for both themes */
+  background: linear-gradient(170deg, var(--background) 0%, color-mix(in srgb, var(--background) 80%, black) 100%);
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.6;
-  /* انیمیشن نرم برای تغییر تم */
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 

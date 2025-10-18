@@ -1,5 +1,6 @@
 import Navbar from './Navbar';
-import Footer from './Footer';
+// Footer removed
+import Attribution from './Attribution'; // Renamed Footer component
 import styles from './Layout.module.css';
 
 const Layout = ({ children }) => {
@@ -7,7 +8,8 @@ const Layout = ({ children }) => {
     <div className={styles.layout}>
       <Navbar />
       <main className={styles.mainContent}>{children}</main>
-      <Footer />
+      {/* Attribution added here, below the main chat content */}
+      <Attribution />
     </div>
   );
 };
