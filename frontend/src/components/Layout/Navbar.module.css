@@ -26,13 +26,29 @@
   border-radius: 8px;
 }
 
-.logoArea h1 {
+.titleVersion {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.titleVersion h1 {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
-/* بخش جدید برای نگه داشتن هر دو دکمه */
+.version {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: var(--background);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+/* بخش کنترل‌ها: دکمه زبان + دکمه تم */
 .controlsArea {
   display: flex;
   align-items: center;
@@ -45,7 +61,6 @@
   border: none;
   padding: 0.5rem 1rem;
   height: 40px;
-  /* هم‌اندازه با دکمه تم */
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 700;

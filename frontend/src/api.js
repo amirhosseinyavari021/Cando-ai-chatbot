@@ -6,14 +6,15 @@ const apiClient = axios.create({
   baseURL: API_URL,
 });
 
-// Added useQualityModel parameter and cancelToken
-export const sendChatMessage = (prompt, useQualityModel = false, cancelToken) => {
+// Removed useQualityModel, added cancelToken parameter
+export const sendChatMessage = (prompt, cancelToken) => {
   return apiClient.post('/api/chat', {
     prompt,
-    useQualityModel, // Send the flag to the backend
+    // useQualityModel removed
   }, {
-    cancelToken: cancelToken
+    cancelToken: cancelToken // Pass the cancel token to axios
   });
 };
 
-export const createCancelTokenSource = () => axios.CancelToken.source();
+// Removed createCancelTokenSource export (now handled in ChatBox.jsx)
+// export const createCancelTokenSource = () => axios.CancelToken.source();

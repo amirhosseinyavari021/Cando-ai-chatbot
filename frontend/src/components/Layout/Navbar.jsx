@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import styles from './Navbar.module.css';
 import ThemeToggle from '../ThemeToggle/ThemeToggle'; // <-- ۱. ایمپورت تاگل تم
-
+const appVersion = import.meta.env.PACKAGE_VERSION;
 const Navbar = () => {
   const { t, i18n } = useTranslation();
 
@@ -15,19 +15,15 @@ const Navbar = () => {
       <div className={`${styles.navContent} container`}>
         <div className={styles.logoArea}>
           <img src="/logo.png" alt="Cando Logo" className={styles.logo} />
-          <h1>{t('navbar_title')}</h1>
+          <div className={styles.titleVersion}>
+            <h1>{t('navbar_title')}</h1>
+            {/* Displays the version read from env */}
+            {appVersion && <span className={styles.version}>v{appVersion}</span>}
+          </div>
         </div>
-
-        {/* ۲. اضافه کردن تاگل‌ها به نوبار */}
-        <div className={styles.controlsArea}>
-          <ThemeToggle />
-          <button onClick={toggleLanguage} className={styles.langToggle}>
-            {i18n.language === 'en' ? 'فارسی' : 'English'}
-          </button>
-        </div>
+        {/* ... controls ... */}
       </div>
     </nav>
   );
 };
-
 export default Navbar;

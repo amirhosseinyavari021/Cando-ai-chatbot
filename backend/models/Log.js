@@ -4,8 +4,8 @@ const logSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   userId: { type: String, required: true, default: 'anonymous' },
   requestType: { type: String, enum: ['TEXT'], required: true },
-  // Add new model identifier to enum
-  modelUsed: { type: String, enum: ['QWEN2.5_3B', 'QWEN2_1.8B', 'QWEN2_7B', 'NONE'], required: true }, // QWEN2_1.8B kept for potential future use
+  // Added OpenRouter model ID
+  modelUsed: { type: String, enum: ['QWEN2.5_3B', 'QWEN2_1.8B', 'QWEN2_7B', 'OPENROUTER_GPTOSS', 'NONE'], required: true },
   status: { type: String, enum: ['SUCCESS', 'ERROR'], required: true },
   errorMessage: { type: String },
   prompt: { type: String },
@@ -13,15 +13,12 @@ const logSchema = new mongoose.Schema({
   latency: { type: Number },
 }, { timestamps: false });
 
-// Update pre-save hook to map the new model name
+// Pre-save hook remains the same for Ollama models if they are still logged
 logSchema.pre('save', function (next) {
-  if (this.modelUsed === 'Qwen2.5:3B') { // Map the actual model name used in code
-    this.modelUsed = 'QWEN2.5_3B';
-  } else if (this.modelUsed === 'qwen2:1.8b-instruct') { // Keep mapping for 1.8b
-    this.modelUsed = 'QWEN2_1.8B';
-  } else if (this.modelUsed === 'qwen2:7b-instruct') { // Keep mapping for 7b
-    this.modelUsed = 'QWEN2_7B';
-  }
+  if (this.modelUsed === 'Qwen2.5:3B') { this.modelUsed = 'QWEN2.5_3B'; }
+  else if (this.modelUsed === 'qwen2:1.8b-instruct') { this.modelUsed = 'QWEN2_1.8B'; }
+  else if (this.modelUsed === 'qwen2:7b-instruct') { this.modelUsed = 'QWEN2_7B'; }
+  // No mapping needed for OPENROUTER_GPTOSS as it's already the identifier
   next();
 });
 
