@@ -22,37 +22,45 @@
   height: 40px;
   width: 40px;
   object-fit: contain;
-  /* حذف بک‌گراند سفید برای سازگاری با تم تاریک */
   border-radius: 8px;
 }
 
+/* Container for title and version */
 .titleVersion {
   display: flex;
   align-items: baseline;
+  /* Align text baselines */
   gap: 0.5rem;
+  /* Space between title and version */
 }
 
 .titleVersion h1 {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
 }
 
+/* Style for the version number */
 .version {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-secondary);
   background-color: var(--background);
+  /* Use background color for chip */
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid var(--border-color);
+  /* Ensure theme transitions apply */
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
-/* بخش کنترل‌ها: دکمه زبان + دکمه تم */
+/* Container for control buttons */
 .controlsArea {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  /* Space between ThemeToggle and LangToggle */
 }
 
 .langToggle {
@@ -61,14 +69,19 @@
   border: none;
   padding: 0.5rem 1rem;
   height: 40px;
+  /* Match ThemeToggle height */
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-family: inherit;
+  /* Ensure correct font */
 }
 
 .langToggle:hover {
   background-color: #3a7bc8;
 }
+
+/* Ensure ThemeToggle styles are loaded (they are in ThemeToggle.module.css) */
+/* No specific styles needed here unless overriding */

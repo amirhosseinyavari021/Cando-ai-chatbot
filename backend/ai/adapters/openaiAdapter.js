@@ -73,13 +73,10 @@ export const queryOpenRouter = async (systemPrompt, context, userQuery, cancelTo
     if (error.response?.status === 401) {
       userErrorMessage = 'OpenRouter API key is invalid or missing.';
     } else if (error.response?.status === 429) {
-        userErrorMessage = 'OpenRouter rate limit or quota exceeded. The free model may have usage limits.';
+      userErrorMessage = 'OpenRouter rate limit or quota exceeded. The free model may have usage limits.';
     } else if (error.response?.data?.error?.message) {
-        userErrorMessage = `OpenRouter Error: ${error.response.data.error.message}`; // Use OpenRouter's specific error
+      userErrorMessage = `OpenRouter Error: ${error.response.data.error.message}`; // Use OpenRouter's specific error
     }
     throw new Error(userErrorMessage);
   }
 };
-
-// Ensure axios is imported if not already
-import axios from 'axios';
