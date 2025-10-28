@@ -1,29 +1,29 @@
 import mongoose from 'mongoose';
 
 const courseSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
-  instructor: { type: String, required: true, trim: true },
-  description: { type: String },
-  schedule: { type: String }, // مثلا: "شنبه‌ها و دوشنبه‌ها ساعت ۱۸ تا ۲۱"
-  fee: { type: String }, // به صورت رشته ذخیره می‌کنیم که انعطاف‌پذیر باشه (مثلا "۵,۰۰۰,۰۰۰ تومان")
-  link: { type: String }, // لینک ثبت‌نام یا اطلاعات بیشتر
-  keywords: [{ type: String }],
-}, { timestamps: true });
+  // فیلدهای فارسی رو اینجا تعریف می‌کنیم تا مانگوس بشناسه
+  'دوره': { type: String, trim: true },
+  'استاد': { type: String, trim: true },
+  'تاریخ شروع': { type: String },
+  'شهریه حضوری': { type: String }, // برای انعطاف‌پذیری رشته در نظر می‌گیریم
+  'شهریه آنلاین با تخفیف': { type: String },
+  'لینک سرفصل (دوره) (Product)': { type: String },
+  'پیش نیاز (دوره) (Product)': { type: String }
+}, {
+  strict: false, // اگه فیلد دیگه‌ای هم توی دیتابیس بود، گیر نده
+  collection: 'courses' // صراحتاً میگیم به کالکشن courses وصل شو
+});
 
-// === مهم ===
-// ایندکس متنی برای جستجوی بهینه
-// این به مانگو دی‌بی میگه که چطور توی این کالکشن جستجوی متنی انجام بده
-courseSchema.index({ 
-  name: 'text', 
-  description: 'text', 
-  instructor: 'text',
-  keywords: 'text'
+// === مهم: ایندکس متنی جدید بر اساس فیلدهای فارسی ===
+courseSchema.index({
+  'دوره': 'text',
+  'استاد': 'text',
+  'پیش نیاز (دوره) (Product)': 'text' // این هم برای جستجو خیلی خوبه
 }, {
   weights: {
-    name: 10,     // به "نام دوره" وزن بیشتری برای جستجو میدیم
-    instructor: 5,
-    keywords: 5,
-    description: 2
+    'دوره': 10,     // به "نام دوره" وزن بیشتری بده
+    'استاد': 5,
+    'پیش نیاز (دوره) (Product)': 3
   }
 });
 

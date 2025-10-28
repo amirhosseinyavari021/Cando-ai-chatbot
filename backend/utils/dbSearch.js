@@ -1,7 +1,7 @@
-import Faq from '../models/Faq.js'; // مدل سوالات متداول
-import Course from '../models/Course.js'; // مدل جدید دوره‌ها
+import Faq from '../models/Faq.js';
+import Course from '../models/Course.js'; // این مدل الان درسته
 
-const MAX_CONTEXT_LENGTH = 1500; // محدودیت برای پرامپت اصلی
+const MAX_CONTEXT_LENGTH = 1500;
 
 /**
  * جستجو در کالکشن Faq (سوالات متداول)
@@ -42,13 +42,13 @@ export const searchFaqs = async (query, limit = 3) => {
 
 
 /**
- * === تابع جدید ===
+ * === آپدیت شده ===
  * جستجو در کالکشن Courses (دوره‌ها)
  */
 export const searchCourses = async (query, limit = 5) => {
   try {
     console.log(`Searching Courses for: "${query}"`);
-    // جستجوی متنی در کالکشن دوره‌ها
+    // این جستجو الان از ایندکس متنی درستی که تعریف کردیم استفاده می‌کنه
     const results = await Course.find(
       { $text: { $search: query } },
       { score: { $meta: "textScore" } }
@@ -58,31 +58,37 @@ export const searchCourses = async (query, limit = 5) => {
 
     if (!results || results.length === 0) {
       console.log("No relevant Courses found in DB.");
-      return ""; // اگه چیزی پیدا نشد، رشته خالی برگردون
+      return "";
     }
 
     console.log(`Found ${results.length} relevant Courses.`);
 
-    // فرمت کردن اطلاعات پیدا شده برای ارسال به AI
     let context = "✅ اطلاعات دوره‌های پیدا شده (از کالکشن courses):\n";
     for (const course of results) {
-      let courseText = `- نام دوره: ${course.name}\n`;
-      if (course.instructor) courseText += `  - استاد: ${course.instructor}\n`;
-      if (course.schedule) courseText += `  - زمان‌بندی: ${course.schedule}\n`;
-      if (course.fee) courseText += `  - شهریه: ${course.fee}\n`;
-      if (course.link) courseText += `  - لینک: ${course.link}\n`;
-      courseText += "\n"; // یه خط خالی برای جداسازی
+      // === اینجا کلید حل مشکل است ===
+      // اطلاعات رو از فیلدهای فارسی که در دیتابیس هستند می‌خونیم
+      let courseText = `- نام دوره: ${course['دوره']}\n`; // Use bracket notation
+      if (course['استاد']) courseText += `  - استاد: ${course['استاد']}\n`;
+      if (course['تاریخ شروع']) courseText += `  - زمان‌بندی: ${course['تاریخ شروع']}\n`;
+
+      // نمایش شهریه‌ها
+      if (course['شهریه حضوری']) courseText += `  - شهریه حضوری: ${course['شهریه حضوری']}\n`;
+      if (course['شهریه آنلاین با تخفیف']) courseText += `  - شهریه آنلاین: ${course['شهریه آنلاین با تخفیف']}\n`;
+
+      if (course['لینک سرفصل (دوره) (Product)']) courseText += `  - لینک: ${course['لینک سرفصل (دوره) (Product)']}\n`;
+      courseText += "\n";
 
       if (context.length + courseText.length <= MAX_CONTEXT_LENGTH) {
         context += courseText;
       } else {
-        break; // اگه متن خیلی طولانی شد، بقیه‌شو بی‌خیال شو
+        break;
       }
     }
     return context;
 
   } catch (error) {
+    // این خطا نباید دیگه اتفاق بیفته چون ایندکس رو درست می‌کنیم
     console.error("Error searching Courses collection:", error);
-    return ""; // در صورت خطا، رشته خالی برگردون
+    return "";
   }
 };
