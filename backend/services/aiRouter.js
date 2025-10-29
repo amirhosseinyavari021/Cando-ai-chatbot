@@ -27,8 +27,8 @@ const createTimeout = (ms) => {
 };
 
 /**
- * --- NEW RAG SEARCH FUNCTION ---
- * Searches Courses and FAQs to build context for the AI.
+ * --- RAG SEARCH FUNCTION (نسخه نهایی با کیفیت بالا) ---
+ * دو جستجوی موازی (متنی و عبارتی) در دیتابیس اجرا کرده و نتایج را ادغام می‌کند.
  * @param {string} userMessage - The user's query.
  * @returns {Promise<string>} - A formatted context string.
  */
@@ -36,33 +36,60 @@ const getContextFromDB = async (userMessage) => {
   let contextParts = [];
 
   try {
-    // 1. Search Courses (using text index and regex)
-    const courseFilter = {
+    // --- جستجوی دوره‌ها (Courses) ---
+    // کوئری ۱: جستجوی متنی (سریع، استفاده از ایندکس text)
+    const courseTextQuery = Course.find(
+      { $text: { $search: userMessage } },
+      { score: { $meta: 'textScore' } }
+    )
+      .sort({ score: { $meta: 'textScore' } })
+      .limit(3)
+      .select('id title instructor_name registration_status mode start_date price');
+
+    // کوئری ۲: جستجوی عبارتی (سریع، استفاده از ایندکس‌های title: 1 و instructor_name: 1)
+    const courseRegexQuery = Course.find({
       $or: [
-        { $text: { $search: userMessage } },
         { instructor_name: { $regex: userMessage, $options: 'i' } },
         { title: { $regex: userMessage, $options: 'i' } },
       ],
-    };
-    const courses = await Course.find(courseFilter)
-      .limit(5)
-      .select('title instructor_name days hours start_date price registration_status mode');
+    })
+      .limit(3)
+      .select('id title instructor_name registration_status mode start_date price');
 
-    if (courses.length > 0) {
-      let courseContext = "--- اطلاعات دوره‌های یافت شده ---\n";
-      courses.forEach(c => {
-        courseContext += `دوره: ${c.title} (استاد: ${c.instructor_name}, وضعیت: ${c.registration_status}, نوع: ${c.mode}, شروع: ${c.start_date}, قیمت: ${c.price})\n`;
-      });
-      contextParts.push(courseContext);
-      logger.info(`RAG: Found ${courses.length} courses.`);
-    }
-
-    // 2. Search FAQs
-    const faqFilter = { $text: { $search: userMessage } };
-    const faqs = await Faq.find(faqFilter)
+    // --- جستجوی سوالات متداول (FAQ) ---
+    const faqQuery = Faq.find(
+      { $text: { $search: userMessage } },
+      { score: { $meta: 'textScore' } }
+    )
+      .sort({ score: { $meta: 'textScore' } })
       .limit(3)
       .select('question answer');
 
+    // --- اجرای همزمان هر سه کوئری ---
+    const [coursesText, coursesRegex, faqs] = await Promise.all([
+      courseTextQuery,
+      courseRegexQuery,
+      faqQuery,
+    ]);
+
+    // --- ادغام نتایج دوره‌ها (حذف موارد تکراری) ---
+    const allCourses = new Map();
+    coursesText.forEach(course => allCourses.set(course.id, course));
+    coursesRegex.forEach(course => allCourses.set(course.id, course));
+
+    const uniqueCourses = Array.from(allCourses.values());
+
+    // ساخت Context برای دوره‌ها
+    if (uniqueCourses.length > 0) {
+      let courseContext = "--- اطلاعات دوره‌های یافت شده ---\n";
+      uniqueCourses.forEach(c => {
+        courseContext += `دوره: ${c.title} (استاد: ${c.instructor_name}, وضعیت: ${c.registration_status}, نوع: ${c.mode}, شروع: ${c.start_date}, قیمت: ${c.price})\n`;
+      });
+      contextParts.push(courseContext);
+      logger.info(`RAG: Found ${uniqueCourses.length} unique courses.`);
+    }
+
+    // ساخت Context برای سوالات متداول
     if (faqs.length > 0) {
       let faqContext = "--- اطلاعات از سوالات متداول ---\n";
       faqs.forEach(f => {
@@ -87,9 +114,7 @@ const getContextFromDB = async (userMessage) => {
 
 /**
  * Routes a user's AI request, WITH RAG, to primary or fallback.
- * @param {string} userMessage - The user's query.
- * @param {string} userId - The user's ID (or 'anonymous').
- * @returns {Promise<{text: string, didFallback: boolean}>}
+ * (این بخش بدون تغییر باقی می‌ماند)
  */
 export const routeRequest = async (userMessage, userId = 'anonymous') => {
   const startTime = Date.now();
