@@ -27,8 +27,8 @@ const createTimeout = (ms) => {
 };
 
 /**
- * --- RAG SEARCH FUNCTION (نسخه نهایی با کیفیت بالا) ---
- * دو جستجوی موازی (متنی و عبارتی) در دیتابیس اجرا کرده و نتایج را ادغام می‌کند.
+ * --- RAG SEARCH FUNCTION (نسخه سریع فقط با $text) ---
+ * فقط از ایندکس متنی برای جستجوی سریع در دیتابیس استفاده می‌کند.
  * @param {string} userMessage - The user's query.
  * @returns {Promise<string>} - A formatted context string.
  */
@@ -36,27 +36,18 @@ const getContextFromDB = async (userMessage) => {
   let contextParts = [];
 
   try {
-    // --- جستجوی دوره‌ها (Courses) ---
-    // کوئری ۱: جستجوی متنی (سریع، استفاده از ایندکس text)
-    const courseTextQuery = Course.find(
+    // --- کوئری‌های موازی فقط با $text ---
+
+    // 1. Search Courses
+    const courseQuery = Course.find(
       { $text: { $search: userMessage } },
       { score: { $meta: 'textScore' } }
     )
       .sort({ score: { $meta: 'textScore' } })
-      .limit(3)
-      .select('id title instructor_name registration_status mode start_date price');
+      .limit(5)
+      .select('title instructor_name registration_status mode start_date price');
 
-    // کوئری ۲: جستجوی عبارتی (سریع، استفاده از ایندکس‌های title: 1 و instructor_name: 1)
-    const courseRegexQuery = Course.find({
-      $or: [
-        { instructor_name: { $regex: userMessage, $options: 'i' } },
-        { title: { $regex: userMessage, $options: 'i' } },
-      ],
-    })
-      .limit(3)
-      .select('id title instructor_name registration_status mode start_date price');
-
-    // --- جستجوی سوالات متداول (FAQ) ---
+    // 2. Search FAQs
     const faqQuery = Faq.find(
       { $text: { $search: userMessage } },
       { score: { $meta: 'textScore' } }
@@ -65,31 +56,23 @@ const getContextFromDB = async (userMessage) => {
       .limit(3)
       .select('question answer');
 
-    // --- اجرای همزمان هر سه کوئری ---
-    const [coursesText, coursesRegex, faqs] = await Promise.all([
-      courseTextQuery,
-      courseRegexQuery,
+    // --- اجرای همزمان کوئری‌ها ---
+    const [courses, faqs] = await Promise.all([
+      courseQuery,
       faqQuery,
     ]);
 
-    // --- ادغام نتایج دوره‌ها (حذف موارد تکراری) ---
-    const allCourses = new Map();
-    coursesText.forEach(course => allCourses.set(course.id, course));
-    coursesRegex.forEach(course => allCourses.set(course.id, course));
-
-    const uniqueCourses = Array.from(allCourses.values());
-
-    // ساخت Context برای دوره‌ها
-    if (uniqueCourses.length > 0) {
+    // --- ساخت Context برای دوره‌ها ---
+    if (courses.length > 0) {
       let courseContext = "--- اطلاعات دوره‌های یافت شده ---\n";
-      uniqueCourses.forEach(c => {
+      courses.forEach(c => {
         courseContext += `دوره: ${c.title} (استاد: ${c.instructor_name}, وضعیت: ${c.registration_status}, نوع: ${c.mode}, شروع: ${c.start_date}, قیمت: ${c.price})\n`;
       });
       contextParts.push(courseContext);
-      logger.info(`RAG: Found ${uniqueCourses.length} unique courses.`);
+      logger.info(`RAG: Found ${courses.length} courses.`);
     }
 
-    // ساخت Context برای سوالات متداول
+    // --- ساخت Context برای سوالات متداول ---
     if (faqs.length > 0) {
       let faqContext = "--- اطلاعات از سوالات متداول ---\n";
       faqs.forEach(f => {
