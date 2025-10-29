@@ -16,10 +16,11 @@ if (OPENAI_API_KEY && AI_PRIMARY_PROMPT_ID) {
 /**
  * Calls the primary OpenAI model using the "Responses API".
  * @param {string} userMessage - The user's text query.
+ * @param {string} dbContext - The context retrieved from RAG.
  * @returns {Promise<{text: string, raw: object}>}
  * @throws {Error} If API call fails or is not configured.
  */
-export const callPrimary = async (userMessage) => {
+export const callPrimary = async (userMessage, dbContext) => {
   if (!openai) {
     throw new Error('Primary AI (OpenAI) is not configured.');
   }
@@ -28,25 +29,30 @@ export const callPrimary = async (userMessage) => {
     `Calling Primary AI (Responses API)... Prompt ID: ${AI_PRIMARY_PROMPT_ID}`
   );
 
+  // --- Define variables for the Responses API ---
+  // !! شما باید متغیر "db_context" را به Prompt خود در پنل OpenAI اضافه کنید !!
+  const apiVariables = {
+    user_message: userMessage,
+  };
+
+  if (dbContext && dbContext.trim() !== "") {
+    apiVariables.db_context = dbContext;
+    logger.info('Sending RAG context to Primary AI.');
+  }
+
   try {
     const response = await openai.responses.create({
       prompt: {
         id: AI_PRIMARY_PROMPT_ID,
         version: '1', // Or whichever version you are using
-        variables: {
-          user_message: userMessage,
-        },
+        variables: apiVariables,
       },
     });
 
     // --- IMPORTANT ---
     // The path to the response text might differ for the "Responses API".
-    // Please ADJUST this path based on the actual object shape returned by
-    // `openai.responses.create()`.
-    // This is a common shape for Chat Completions, but maybe not Responses:
-    const text = response.choices?.[0]?.message?.content?.trim();
-    // A possible alternative for "Responses API" might be:
-    // const text = response.text?.trim();
+    // Please ADJUST this path based on the actual object shape.
+    const text = response.choices?.[0]?.message?.content?.trim() || response.text?.trim();
 
     if (!text) {
       logger.error(

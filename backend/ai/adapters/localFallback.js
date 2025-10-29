@@ -4,8 +4,12 @@ import logger from '../../middleware/logger.js';
 
 const { AI_LOCAL_MODEL_URL, AI_LOCAL_MODEL_NAME } = aiConfig;
 
-// Use a static system prompt for the local model, as requested
-const LOCAL_SYSTEM_PROMPT = `You are Cando AI Assistant. Answer in Persian by default (unless user asks English). Be concise, friendly, and accurate. Use only available DB/API facts; do not fabricate. If info is missing, say you'll refer the question to a human advisor.`;
+// --- UPDATED SYSTEM PROMPT ---
+// این پرامپت اکنون می‌داند که اگر اطلاعاتی به او داده شد، از آن‌ها استفاده کند
+const LOCAL_SYSTEM_PROMPT = `You are Cando AI Assistant. Answer in Persian by default (unless user asks English). Be concise, friendly, and accurate.
+**Rule:** If context (information) is provided below, use ONLY that context to answer the user's question.
+**Rule:** If no context is provided, or the context doesn't answer the question, politely say you don't have that specific information and will refer the question to a human advisor.
+**Rule:** Do not fabricate (make up) information.`;
 
 let localOpenai;
 if (AI_LOCAL_MODEL_URL && AI_LOCAL_MODEL_NAME) {
@@ -18,10 +22,11 @@ if (AI_LOCAL_MODEL_URL && AI_LOCAL_MODEL_NAME) {
 /**
  * Calls the local fallback LLM (Ollama, etc.) via an OpenAI-compatible API.
  * @param {string} userMessage - The user's text query.
+ * @param {string} dbContext - The context retrieved from RAG.
  * @returns {Promise<{text: string, raw: object}>}
  * @throws {Error} If API call fails or is not configured.
  */
-export const callLocal = async (userMessage) => {
+export const callLocal = async (userMessage, dbContext) => {
   if (!localOpenai) {
     throw new Error('Local Fallback AI is not configured.');
   }
@@ -30,19 +35,31 @@ export const callLocal = async (userMessage) => {
     `Calling Local Fallback AI... Model: ${AI_LOCAL_MODEL_NAME}`
   );
 
+  // --- Build messages array, including context if it exists ---
+  const messages = [
+    {
+      role: 'system',
+      content: LOCAL_SYSTEM_PROMPT,
+    },
+  ];
+
+  if (dbContext && dbContext.trim() !== "") {
+    messages.push({
+      role: 'system', // Add context as a second system message
+      content: `Here is the context from the database:\n${dbContext}`,
+    });
+    logger.info('Sending RAG context to Fallback AI.');
+  }
+
+  messages.push({
+    role: 'user',
+    content: userMessage,
+  });
+
   try {
     const response = await localOpenai.chat.completions.create({
       model: AI_LOCAL_MODEL_NAME,
-      messages: [
-        {
-          role: 'system',
-          content: LOCAL_SYSTEM_PROMPT,
-        },
-        {
-          role: 'user',
-          content: userMessage,
-        },
-      ],
+      messages: messages,
       stream: false,
     });
 
@@ -60,7 +77,6 @@ export const callLocal = async (userMessage) => {
     return { text, raw: response };
   } catch (error) {
     logger.error(`Local Fallback AI call failed: ${error.message}`);
-    // Check for common connection errors
     if (error.code === 'ECONNREFUSED') {
       throw new Error(
         `Local Fallback AI connection refused at ${AI_LOCAL_MODEL_URL}. Is the service running?`
