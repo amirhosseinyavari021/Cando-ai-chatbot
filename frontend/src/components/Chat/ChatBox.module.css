@@ -61,11 +61,13 @@
 }
 
 .inputField:focus {
-  /* ... */
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 .inputField::placeholder {
-  /* ... */
+  color: var(--text-secondary);
+  opacity: 0.8;
 }
 
 .controlButton {
@@ -139,6 +141,47 @@
   cursor: not-allowed;
 }
 
+/* --- NEW ERROR STYLES --- */
+.errorDisplay {
+  padding: 1rem 1.5rem;
+  background-color: color-mix(in srgb, #e53e3e 10%, var(--surface));
+  border: 1px solid color-mix(in srgb, #e53e3e 30%, var(--border-color));
+  border-radius: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.errorDisplay p {
+  color: #e53e3e;
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.errorClearButton {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: inherit;
+}
+
+.errorClearButton:hover {
+  background-color: #3a7bc8;
+}
+
+
+/* --- Old Typing Indicator (kept for reference, but new Loading component is used) --- */
 .typingIndicator {
   /* ... remains the same ... */
 }
@@ -151,6 +194,7 @@
   /* ... remains the same ... */
 }
 
+/* --- Media Query (Updated) --- */
 @media (max-width: 768px) {
   .chatContainer {
     margin: 0;
@@ -164,6 +208,7 @@
     box-shadow: none;
   }
 
+  /* .mainContent is defined in Layout.module.css, but this rule from the old file is useful */
   .mainContent {
     padding-top: 0;
   }

@@ -22,11 +22,17 @@ const errorHandler = (err, req, res, next) => {
     message = 'Resource not found.';
   }
 
+  // --- Hide internal errors in production ---
+  // If status is 500 in production, send a generic message
+  if (statusCode === 500 && process.env.NODE_ENV === 'production') {
+    message = 'An internal server error occurred.';
+  }
+
   res.status(statusCode).json({
     success: false,
     message: message,
     // Show the error stack only in development mode for easier debugging
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+    stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack,
   });
 };
 
