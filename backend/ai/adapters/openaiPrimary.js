@@ -1,79 +1,50 @@
+// backend/ai/adapters/openaiPrimary.js
 import OpenAI from 'openai';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import aiConfig from '../../config/ai.js';
 import logger from '../../middleware/logger.js';
 
-// ✅ بارگذاری امن .env (حتی اگر از جای دیگری import نشده باشد)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-// خواندن متغیرها از process.env
 const {
   OPENAI_API_KEY,
   OPENAI_API_URL = 'https://api.openai.com/v1',
   AI_PRIMARY_PROMPT_ID,
-} = process.env;
+} = aiConfig;
 
 let openai;
-
-// ✅ اطمینان از مقداردهی کلید
-if (OPENAI_API_KEY && AI_PRIMARY_PROMPT_ID) {
-  openai = new OpenAI({
-    apiKey: OPENAI_API_KEY,
-    baseURL: OPENAI_API_URL,
-  });
-  logger.info('✅ OpenAI client initialized successfully.');
+if (OPENAI_API_KEY) {
+  openai = new OpenAI({ apiKey: OPENAI_API_KEY, baseURL: OPENAI_API_URL });
+  logger.info('✅ OpenAI client initialized');
 } else {
-  logger.warn('⚠️ OpenAI not initialized: missing API key or prompt ID.');
+  logger.warn('⚠️ OPENAI_API_KEY missing');
 }
 
 /**
- * Calls the primary OpenAI model using the "Responses API".
+ * اگر dbContext === null باشد، یعنی باید inline تزریق شود
+ * و متغیّرهای پرامپت شامل db_context ارسال نشود.
  */
-export const callPrimary = async (userMessage, dbContext) => {
-  if (!openai) {
+export const callPrimary = async (userMessage, dbContext /* string | null */) => {
+  if (!openai || !AI_PRIMARY_PROMPT_ID) {
     throw new Error('Primary AI (OpenAI) is not configured.');
   }
 
-  logger.info(
-    `Calling Primary AI (Responses API)... Prompt ID: ${AI_PRIMARY_PROMPT_ID}`
-  );
-
-  // 🧠 تزریق context مستقیماً داخل پیام، برای جلوگیری از خطای Unknown variable
-  let finalMessage = userMessage;
-  if (dbContext && dbContext.trim() !== '') {
-    finalMessage += `\n\n[Context Information]\n${dbContext}`;
-    logger.info('🧩 Injected DB context directly into user_message (safe mode)');
-  }
-
-  const apiVariables = { user_message: finalMessage };
+  const variables = { user_message: userMessage };
+  const payload =
+    typeof dbContext === 'string' && dbContext.trim()
+      ? { prompt: { id: AI_PRIMARY_PROMPT_ID, version: '1', variables: { ...variables, db_context: dbContext } } }
+      : { prompt: { id: AI_PRIMARY_PROMPT_ID, version: '1', variables } };
 
   try {
-    const response = await openai.responses.create({
-      prompt: {
-        id: AI_PRIMARY_PROMPT_ID,
-        version: '1',
-        variables: apiVariables,
-      },
-    });
+    const response = await openai.responses.create(payload);
 
-    // استخراج متن خروجی (با پشتیبانی از همه ساختارهای ممکن)
     const text =
       response.output?.[0]?.content?.[0]?.text?.trim() ||
       response.choices?.[0]?.message?.content?.trim() ||
       response.text?.trim();
 
-    if (!text) {
-      logger.error('Primary AI returned an empty response.', response);
-      throw new Error('Primary AI returned an empty or invalid response.');
-    }
-
-    logger.info('✅ Primary AI call successful.');
+    if (!text) throw new Error('Empty response from primary AI');
+    logger.info('✅ Primary AI ok');
     return { text, raw: response };
-  } catch (error) {
-    logger.error(`❌ Primary AI (OpenAI) call failed: ${error.message}`);
-    throw new Error(`Primary AI Error: ${error.message}`);
+  } catch (e) {
+    logger.error(`❌ Primary AI error: ${e.message}`);
+    throw new Error(`Primary AI Error: ${e.message}`);
   }
 };

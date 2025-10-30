@@ -1,3 +1,4 @@
+// backend/controllers/aiController.js
 import asyncHandler from 'express-async-handler';
 import { routeRequest } from '../services/aiRouter.js';
 
@@ -6,34 +7,30 @@ import { routeRequest } from '../services/aiRouter.js';
  * @route   POST /api/ai/ask
  * @access  Public
  */
-const askQuestion = asyncHandler(async (req, res) => {
-  const { message, userId } = req.body; // Allow userId from authenticated routes later
+export const askQuestion = asyncHandler(async (req, res) => {
+  const { message, userId, sessionId } = req.body || {};
 
   if (!message || !message.trim()) {
-    res.status(400);
-    throw new Error('Message is required.');
+    return res.status(400).json({ success: false, error: 'Message is required.' });
   }
 
   try {
     const result = await routeRequest(
-      message,
-      userId || (req.user ? req.user._id : 'anonymous')
+      message.trim(),
+      userId || 'anonymous',
+      sessionId || 'anon-session'
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: result.text,
       fallback: result.didFallback,
     });
   } catch (error) {
-    // The aiRouter already logged the details.
-    // The errorHandler middleware will catch this.
-    // Send a user-friendly error.
-    res.status(503); // Service Unavailable
-    throw new Error(
-      'در حال حاضر دسترسی به سرویس هوش‌مصنوعی ممکن نیست. لطفاً کمی بعد دوباره تلاش کنید.'
-    );
+    // خروجی سازگار برای UI (بدون لو دادن جزییات داخلی)
+    return res.status(503).json({
+      success: false,
+      error: 'در حال حاضر امکان پاسخ‌گویی وجود ندارد. لطفاً کمی بعد دوباره تلاش کنید.',
+    });
   }
 });
-
-export { askQuestion };
