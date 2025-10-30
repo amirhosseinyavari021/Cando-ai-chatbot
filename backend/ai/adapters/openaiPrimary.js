@@ -41,12 +41,14 @@ export const callPrimary = async (userMessage, dbContext) => {
     `Calling Primary AI (Responses API)... Prompt ID: ${AI_PRIMARY_PROMPT_ID}`
   );
 
-  const apiVariables = { user_message: userMessage };
-
+  // 🧠 تزریق context مستقیماً داخل پیام، برای جلوگیری از خطای Unknown variable
+  let finalMessage = userMessage;
   if (dbContext && dbContext.trim() !== '') {
-    apiVariables.db_context = dbContext;
-    logger.info('Sending RAG context to Primary AI.');
+    finalMessage += `\n\n[Context Information]\n${dbContext}`;
+    logger.info('🧩 Injected DB context directly into user_message (safe mode)');
   }
+
+  const apiVariables = { user_message: finalMessage };
 
   try {
     const response = await openai.responses.create({
@@ -57,7 +59,7 @@ export const callPrimary = async (userMessage, dbContext) => {
       },
     });
 
-    // استخراج متن خروجی
+    // استخراج متن خروجی (با پشتیبانی از همه ساختارهای ممکن)
     const text =
       response.output?.[0]?.content?.[0]?.text?.trim() ||
       response.choices?.[0]?.message?.content?.trim() ||
