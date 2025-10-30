@@ -1,5 +1,5 @@
-import dotenv from 'dotenv';
-dotenv.config();
+// import dotenv from 'dotenv';
+// dotenv.config(); // --- حذف شد: این خط باعث خطا می‌شد ---
 
 const aiConfig = {
   // --- OpenAI Primary ---

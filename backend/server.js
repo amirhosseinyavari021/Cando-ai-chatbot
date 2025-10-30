@@ -1,8 +1,15 @@
-import express from 'express';
 import dotenv from 'dotenv';
-import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+// --- راه‌حل: بارگذاری .env در همین ابتدا و با مسیردهی صحیح ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+// --- پایان راه‌حل ---
+
+import express from 'express';
+import cors from 'cors';
 import connectDB from './config/db.js';
 import { requestDetailsLogger } from './middleware/logger.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
@@ -12,15 +19,10 @@ import aiRoutes from './routes/ai.js';
 import courseRoutes from './routes/courses.js';
 import instructorRoutes from './routes/instructors.js';
 import faqRoutes from './routes/faq.js';
-// --- Old routes (admin, logs) can be re-added if needed ---
 // import adminRoutes from './routes/adminRoutes.js';
 // import logRoutes from './routes/logRoutes.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Ensure .env is loaded from the correct path
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+// (dotenv.config() از اینجا حذف شد چون به بالای فایل منتقل شد)
 
 // Connect to MongoDB (will safely skip if MONGODB_URI is not set)
 connectDB();
