@@ -1,18 +1,21 @@
-// backend/ai/adapters/aiRouter.js
-// (This file is MOVED from services/ and refactored)
+// backend/services/aiRouter.js
+// (مسیردهی اصلاح شده)
 
-import config from '../../config/ai.js';
+import config from '../config/ai.js'; // مسیر صحیح (دو مرحله به بالا، سپس config)
 const { AI_TIMEOUT_MS } = config;
-import { createLogEntry } from '../../middleware/logger.js';
-import { callPrimary } from './openaiPrimary.js';
-import { callLocal } from './localFallback.js';
-import logger from '../../middleware/logger.js';
+import { createLogEntry } from '../middleware/logger.js'; // مسیر صحیح (دو مرحله به بالا، سپس middleware)
+import logger from '../middleware/logger.js'; // مسیر صحیح
 
-// --- NEW/UPDATED Imports from 'services' directory ---
-import { getRAGContext } from '../services/dbSearch.js';
-import { getMemory, updateMemory } from '../services/conversationMemory.js';
-import { composeFinalAnswer } from '../services/responseFormatter.js';
-// --- End NEW ---
+// --- مسیردهی اصلاح شده برای import از فولدر adapters ---
+import { callPrimary } from '../ai/adapters/openaiPrimary.js';
+import { callLocal } from '../ai/adapters/localFallback.js';
+// ---
+
+// --- مسیردهی اصلاح شده (نسبی) برای import از همین فولدر services ---
+import { getRAGContext } from './dbSearch.js';
+import { getMemory, updateMemory } from './conversationMemory.js';
+import { composeFinalAnswer } from './responseFormatter.js';
+// ---
 
 /**
  * Creates a timeout promise that rejects after a specified duration.
@@ -35,14 +38,16 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
   const start = Date.now();
   let result, provider, final;
   let primaryError = null;
+  let dbContext = ''; // Ensure dbContext is in scope
 
   try {
     // --- Step 1 & 2: Get Memory and RAG Context (in parallel) ---
     logger.info(`🤖 Routing request for user: ${userId}`);
-    const [history, dbContext] = await Promise.all([
+    const [history, retrievedDbContext] = await Promise.all([
       getMemory(userId, 6), // Get last 6 messages (3 exchanges)
       getRAGContext(userMessage), // Get context from NEW RAG service
     ]);
+    dbContext = retrievedDbContext; // Assign to outer scope
 
     const historyString = history
       .map((h) => `${h.role === 'user' ? 'کاربر' : 'دستیار'}: ${h.content}`)
@@ -64,45 +69,43 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
     try {
       logger.info('Calling Primary AI (with inlined context)...');
       result = await Promise.race([
-        // Pass 'null' for dbContext to prevent sending 'prompt_variables'
         callPrimary(messageForPrimary, null),
         createTimeout(AI_TIMEOUT_MS),
       ]);
       provider = 'primary';
       logger.info('✅ Primary AI call successful.');
 
-      // --- Step 5: Format the response ---
-      final = composeFinalAnswer(result.text); // Use NEW Naturalizer
+      final = composeFinalAnswer(result.text);
 
-      // --- Step 6: Update Memory ---
       updateMemory(userId, { role: 'user', content: userMessage });
       updateMemory(userId, { role: 'assistant', content: final.text });
     } catch (err) {
       logger.warn(`⚠️ Primary AI failed: ${err.message}`);
       primaryError = err;
-      provider = 'fallback'; // Set provider to fallback
+      provider = 'fallback';
     }
 
     // --- Step 4: Try Fallback AI (if primary failed) ---
     if (provider === 'fallback') {
       try {
         logger.warn('Calling Fallback AI...');
-        // Pass the original message and separate context to the local model
         const fallbackResult = await callLocal(messageForLocal, dbContext);
 
-        // --- Step 5 (Fallback): Format the response ---
-        final = composeFinalAnswer(fallbackResult.text); // Use Naturalizer
+        final = composeFinalAnswer(fallbackResult.text);
 
-        // --- Step 6 (Fallback): Update Memory ---
         updateMemory(userId, { role: 'user', content: userMessage });
         updateMemory(userId, { role: 'assistant', content: final.text });
+
+        // Use provider for modelUsed if specific model isn't returned
+        result = fallbackResult; // Store fallback result
       } catch (fallbackError) {
         logger.error(`❌ Fallback AI also failed: ${fallbackError.message}`);
         throw primaryError || new Error('AI service unavailable.');
       }
     }
 
-    // --- Step 7: Log the interaction ---
+    // --- Step 7: Log the interaction (SUCCESS LOG) ---
+    // *** FIX: Added status, modelUsed, and requestType ***
     await createLogEntry({
       userId,
       prompt: userMessage,
@@ -110,23 +113,32 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
       provider,
       latency: Date.now() - start,
       contextUsed: dbContext && dbContext.length > 0,
+      // --- ADDED FIELDS ---
+      status: 'success',
+      modelUsed: provider, // Using 'provider' as 'modelUsed'
+      requestType: 'ai_query',
     });
 
     return {
       text: final.text,
-      raw: result, // 'result' might be undefined if primary failed, which is ok
+      raw: result,
       provider,
     };
   } catch (error) {
     logger.error(`❌ AI Routing failed: ${error.message}`);
-    // Log the failure
+    // --- Step 7 (Failure Log) ---
+    // *** FIX: Added status, modelUsed, and requestType ***
     await createLogEntry({
       userId,
       prompt: userMessage,
       response: error.message,
       provider: 'error',
       latency: Date.now() - start,
-      contextUsed: false,
+      contextUsed: dbContext && dbContext.length > 0,
+      // --- ADDED FIELDS ---
+      status: 'error',
+      modelUsed: provider || 'unknown',
+      requestType: 'ai_query',
     });
     // Re-throw to be caught by the controller
     throw new Error(
