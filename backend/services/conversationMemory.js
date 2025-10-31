@@ -1,4 +1,4 @@
-// backend/services/conversationMemory.js
+// backend/ai/services/conversationMemory.js
 
 /**
  * This is an in-memory cache for conversations.
@@ -11,7 +11,8 @@
  * ]>
  */
 const memory = new Map();
-const MAX_HISTORY_LENGTH = 100; // Store last 100 messages as requested
+// Updated to 200 messages (100 user + 100 assistant = 100 exchanges)
+const MAX_HISTORY_LENGTH = 200;
 
 /**
  * (REPLACES getHistory)

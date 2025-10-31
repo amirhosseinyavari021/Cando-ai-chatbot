@@ -1,20 +1,17 @@
-// backend/services/aiRouter.js
-// (REFACTORED - FINAL FIX 3.0)
+// backend/ai/adapters/aiRouter.js
+// (This file is MOVED from services/ and refactored)
 
-// --- FIX 1: Correctly import AI_TIMEOUT_MS ---
-import config from '../config/ai.js';
+import config from '../../config/ai.js';
 const { AI_TIMEOUT_MS } = config;
-// --- END FIX 1 ---
+import { createLogEntry } from '../../middleware/logger.js';
+import { callPrimary } from './openaiPrimary.js';
+import { callLocal } from './localFallback.js';
+import logger from '../../middleware/logger.js';
 
-import { createLogEntry } from '../middleware/logger.js';
-import { callPrimary } from '../ai/adapters/openaiPrimary.js';
-import { callLocal } from '../ai/adapters/localFallback.js';
-import logger from '../middleware/logger.js';
-
-// --- NEW/UPDATED Imports ---
-import { getRAGContext } from './dbSearch.js';
-import { getMemory, updateMemory } from './conversationMemory.js';
-import { composeFinalAnswer } from './responseComposer.js';
+// --- NEW/UPDATED Imports from 'services' directory ---
+import { getRAGContext } from '../services/dbSearch.js';
+import { getMemory, updateMemory } from '../services/conversationMemory.js';
+import { composeFinalAnswer } from '../services/responseFormatter.js';
 // --- End NEW ---
 
 /**
@@ -43,28 +40,25 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
     // --- Step 1 & 2: Get Memory and RAG Context (in parallel) ---
     logger.info(`🤖 Routing request for user: ${userId}`);
     const [history, dbContext] = await Promise.all([
-      getMemory(userId, 6), // Get last 6 messages
-      getRAGContext(userMessage), // Get context from RAG service
+      getMemory(userId, 6), // Get last 6 messages (3 exchanges)
+      getRAGContext(userMessage), // Get context from NEW RAG service
     ]);
 
     const historyString = history
       .map((h) => `${h.role === 'user' ? 'کاربر' : 'دستیار'}: ${h.content}`)
       .join('\n');
 
-    // --- FIX 2: Inline context for Primary AI ---
-    // 1. For Primary AI: Prepend context to the message.
+    // --- Prep Prompts for Primary (inlined) and Fallback (separate) ---
     const contextForPrimary =
       dbContext && dbContext.trim().length > 0
         ? `--- اطلاعات زمینه ---\n${dbContext}\n---\n\n`
         : '';
     const messageForPrimary = `${contextForPrimary}${historyString}\nکاربر: ${userMessage}`;
 
-    // 2. For Fallback AI: Pass message and context separately.
     const messageForLocal =
       historyString.length > 0
         ? `${historyString}\nکاربر: ${userMessage}`
         : userMessage;
-    // --- END FIX 2 ---
 
     // --- Step 3: Try Primary AI ---
     try {
@@ -78,7 +72,7 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
       logger.info('✅ Primary AI call successful.');
 
       // --- Step 5: Format the response ---
-      final = composeFinalAnswer(result.text); // Use Naturalizer
+      final = composeFinalAnswer(result.text); // Use NEW Naturalizer
 
       // --- Step 6: Update Memory ---
       updateMemory(userId, { role: 'user', content: userMessage });
@@ -102,12 +96,8 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
         // --- Step 6 (Fallback): Update Memory ---
         updateMemory(userId, { role: 'user', content: userMessage });
         updateMemory(userId, { role: 'assistant', content: final.text });
-
-        // --- FIX 3: Removed the accidental '.md' ---
       } catch (fallbackError) {
-        // --- END FIX 3 ---
         logger.error(`❌ Fallback AI also failed: ${fallbackError.message}`);
-        // Re-throw the original primary error or a generic one
         throw primaryError || new Error('AI service unavailable.');
       }
     }
@@ -124,7 +114,7 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
 
     return {
       text: final.text,
-      raw: result,
+      raw: result, // 'result' might be undefined if primary failed, which is ok
       provider,
     };
   } catch (error) {
