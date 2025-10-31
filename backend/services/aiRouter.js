@@ -1,10 +1,16 @@
 // backend/services/aiRouter.js
 // (REFACTORED)
-import { AI_TIMEOUT_MS } from '../config/ai.js';
+
+// --- THIS IS THE FIX ---
+// We import the 'default' config object, then destructure AI_TIMEOUT_MS from it.
+import config from '../config/ai.js';
+const { AI_TIMEOUT_MS } = config;
+// --- END FIX ---
+
 import { createLogEntry } from '../middleware/logger.js';
 import { callPrimary } from '../ai/adapters/openaiPrimary.js';
 import { callLocal } from '../ai/adapters/localFallback.js';
-import logger from '../middleware/logger.js'; // Added missing logger import
+import logger from '../middleware/logger.js';
 
 // --- NEW/UPDATED Imports ---
 import { getRAGContext } from './dbSearch.js';
