@@ -1,7 +1,11 @@
 // backend/services/aiRouter.js
-// (REFACTORED - FINAL FIX)
+// (REFACTORED - FINAL FIX 3.0)
+
+// --- FIX 1: Correctly import AI_TIMEOUT_MS ---
 import config from '../config/ai.js';
 const { AI_TIMEOUT_MS } = config;
+// --- END FIX 1 ---
+
 import { createLogEntry } from '../middleware/logger.js';
 import { callPrimary } from '../ai/adapters/openaiPrimary.js';
 import { callLocal } from '../ai/adapters/localFallback.js';
@@ -47,30 +51,26 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
       .map((h) => `${h.role === 'user' ? 'کاربر' : 'دستیار'}: ${h.content}`)
       .join('\n');
 
-    // --- THIS IS THE FIX ---
-    // We create two different versions of the prompt.
-
-    // 1. For Primary AI: We "inline" the context as per the adapter's hint.
-    // We prepend the context to the combined message.
+    // --- FIX 2: Inline context for Primary AI ---
+    // 1. For Primary AI: Prepend context to the message.
     const contextForPrimary =
       dbContext && dbContext.trim().length > 0
         ? `--- اطلاعات زمینه ---\n${dbContext}\n---\n\n`
         : '';
     const messageForPrimary = `${contextForPrimary}${historyString}\nکاربر: ${userMessage}`;
 
-    // 2. For Fallback AI: We pass message and context separately,
-    // as the local adapter knows how to handle them.
+    // 2. For Fallback AI: Pass message and context separately.
     const messageForLocal =
       historyString.length > 0
         ? `${historyString}\nکاربر: ${userMessage}`
         : userMessage;
-    // --- END FIX ---
+    // --- END FIX 2 ---
 
     // --- Step 3: Try Primary AI ---
     try {
       logger.info('Calling Primary AI (with inlined context)...');
       result = await Promise.race([
-        // We pass 'null' for dbContext to prevent sending 'prompt_variables'
+        // Pass 'null' for dbContext to prevent sending 'prompt_variables'
         callPrimary(messageForPrimary, null),
         createTimeout(AI_TIMEOUT_MS),
       ]);
@@ -102,7 +102,10 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
         // --- Step 6 (Fallback): Update Memory ---
         updateMemory(userId, { role: 'user', content: userMessage });
         updateMemory(userId, { role: 'assistant', content: final.text });
-      } catch (fallbackError).md {
+
+        // --- FIX 3: Removed the accidental '.md' ---
+      } catch (fallbackError) {
+        // --- END FIX 3 ---
         logger.error(`❌ Fallback AI also failed: ${fallbackError.message}`);
         // Re-throw the original primary error or a generic one
         throw primaryError || new Error('AI service unavailable.');
