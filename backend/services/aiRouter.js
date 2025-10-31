@@ -1,12 +1,7 @@
 // backend/services/aiRouter.js
-// (REFACTORED)
-
-// --- THIS IS THE FIX ---
-// We import the 'default' config object, then destructure AI_TIMEOUT_MS from it.
+// (REFACTORED - FINAL FIX)
 import config from '../config/ai.js';
 const { AI_TIMEOUT_MS } = config;
-// --- END FIX ---
-
 import { createLogEntry } from '../middleware/logger.js';
 import { callPrimary } from '../ai/adapters/openaiPrimary.js';
 import { callLocal } from '../ai/adapters/localFallback.js';
@@ -29,18 +24,7 @@ const createTimeout = (ms) =>
   );
 
 /**
- * (REMOVED getContextFromDB - Now in dbSearch.js)
- */
-
-/**
  * Orchestrates the entire AI request lifecycle.
- * 1. Get conversation memory.
- * 2. Get RAG context.
- * 3. Try Primary AI (with timeout).
- * 4. Try Fallback AI (if primary fails).
- * 5. Format the response.
- * 6. Update memory.
- * 7. Log the interaction.
  *
  * @param {string} userMessage - The user's incoming query.
  * @param {string} userId - The unique identifier for the user.
@@ -55,34 +39,46 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
     // --- Step 1 & 2: Get Memory and RAG Context (in parallel) ---
     logger.info(`🤖 Routing request for user: ${userId}`);
     const [history, dbContext] = await Promise.all([
-      getMemory(userId, 6), // Get last 6 messages from NEW memory service
-      getRAGContext(userMessage), // Get context from NEW RAG service
+      getMemory(userId, 6), // Get last 6 messages
+      getRAGContext(userMessage), // Get context from RAG service
     ]);
 
-    // Combine history into a string for the adapters
-    // The adapters are responsible for formatting the final prompt
     const historyString = history
       .map((h) => `${h.role === 'user' ? 'کاربر' : 'دستیار'}: ${h.content}`)
       .join('\n');
 
-    // Combine history + user message for a complete prompt
-    const combinedMessage =
+    // --- THIS IS THE FIX ---
+    // We create two different versions of the prompt.
+
+    // 1. For Primary AI: We "inline" the context as per the adapter's hint.
+    // We prepend the context to the combined message.
+    const contextForPrimary =
+      dbContext && dbContext.trim().length > 0
+        ? `--- اطلاعات زمینه ---\n${dbContext}\n---\n\n`
+        : '';
+    const messageForPrimary = `${contextForPrimary}${historyString}\nکاربر: ${userMessage}`;
+
+    // 2. For Fallback AI: We pass message and context separately,
+    // as the local adapter knows how to handle them.
+    const messageForLocal =
       historyString.length > 0
         ? `${historyString}\nکاربر: ${userMessage}`
         : userMessage;
+    // --- END FIX ---
 
     // --- Step 3: Try Primary AI ---
     try {
-      logger.info('Calling Primary AI...');
+      logger.info('Calling Primary AI (with inlined context)...');
       result = await Promise.race([
-        callPrimary(combinedMessage, dbContext), // Pass context to adapter
+        // We pass 'null' for dbContext to prevent sending 'prompt_variables'
+        callPrimary(messageForPrimary, null),
         createTimeout(AI_TIMEOUT_MS),
       ]);
       provider = 'primary';
       logger.info('✅ Primary AI call successful.');
 
       // --- Step 5: Format the response ---
-      final = composeFinalAnswer(result.text); // Use NEW Naturalizer
+      final = composeFinalAnswer(result.text); // Use Naturalizer
 
       // --- Step 6: Update Memory ---
       updateMemory(userId, { role: 'user', content: userMessage });
@@ -97,16 +93,16 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
     if (provider === 'fallback') {
       try {
         logger.warn('Calling Fallback AI...');
-        // Pass the same combined message and context to the local model
-        const fallbackResult = await callLocal(combinedMessage, dbContext);
+        // Pass the original message and separate context to the local model
+        const fallbackResult = await callLocal(messageForLocal, dbContext);
 
         // --- Step 5 (Fallback): Format the response ---
-        final = composeFinalAnswer(fallbackResult.text); // Use NEW Naturalizer
+        final = composeFinalAnswer(fallbackResult.text); // Use Naturalizer
 
         // --- Step 6 (Fallback): Update Memory ---
         updateMemory(userId, { role: 'user', content: userMessage });
         updateMemory(userId, { role: 'assistant', content: final.text });
-      } catch (fallbackError) {
+      } catch (fallbackError).md {
         logger.error(`❌ Fallback AI also failed: ${fallbackError.message}`);
         // Re-throw the original primary error or a generic one
         throw primaryError || new Error('AI service unavailable.');
@@ -125,7 +121,7 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
 
     return {
       text: final.text,
-      raw: result, // 'result' might be undefined if primary failed, which is ok
+      raw: result,
       provider,
     };
   } catch (error) {
