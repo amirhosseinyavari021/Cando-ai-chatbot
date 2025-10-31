@@ -1,218 +1,140 @@
 // backend/services/aiRouter.js
-import { callPrimary } from '../ai/adapters/openaiPrimary.js';
-import { callLocal } from '../ai/adapters/localFallback.js';
-import { createLogEntry } from '../middleware/logger.js';
-import logger from '../middleware/logger.js';
-import aiConfig from '../config/ai.js';
 
-import Course from '../models/Course.js';
-import Faq from '../models/Faq.js';
-// اگر Instructor مدل داری، آن‌را باز کن:
-// import Instructor from '../models/Instructor.js';
-
-import { appendTurn, getHistory } from './conversationMemory.js';
+import natural from "natural";
+import { callPrimary } from "../ai/adapters/openaiPrimary.js";
+import { callLocal } from "../ai/adapters/localFallback.js";
+import { getHistory, appendTurn } from "./conversationMemory.js";
+import { composeFinalAnswer } from "./responseComposer.js";
+import { createLogEntry } from "../middleware/logger.js";
+import logger from "../middleware/logger.js";
+import aiConfig from "../config/ai.js";
+import Course from "../models/Course.js";
+import Faq from "../models/Faq.js";
 
 const {
   AI_TIMEOUT_MS = 15000,
   AI_FALLBACK_ENABLED = true,
-  AI_PRIMARY_MODEL = 'gpt-4.1',
-  AI_LOCAL_MODEL_NAME = 'qwen2:7b-instruct',
+  AI_PRIMARY_MODEL,
+  AI_LOCAL_MODEL_NAME,
 } = aiConfig;
 
 const createTimeout = (ms) =>
-  new Promise((_, rej) => setTimeout(() => rej(new Error(`AI Timeout: ${ms}ms`)), ms));
+  new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`AI Timeout: ${ms}ms`)), ms)
+  );
 
-function sanitizeAnswer(s) {
-  if (!s) return s;
-  const patterns = [
-    /(?:در|از) (?:FAQ|دیتابیس|پایگاه داده|courses|instructors) (?:چک|جستجو) (?:می‌کنم|کردم)[^\.!\n]*[\.!\n]?/gi,
-    /من اول (?:FAQ|پایگاه داده) را چک می‌کنم[^\.!\n]*[\.!\n]?/gi,
-    /در دیتابیس اطلاعاتی نبود[^\.!\n]*[\.!\n]?/gi,
-  ];
-  let out = s;
-  for (const p of patterns) out = out.replace(p, '');
-  return out.replace(/\n{3,}/g, '\n\n').trim();
-}
-
-function minifyContext(sections, maxChars = 1400) {
-  const out = [];
-  let used = 0;
-  for (const s of sections) {
-    if (!s) continue;
-    const add = s.slice(0, Math.min(s.length, 400));
-    if (used + add.length > maxChars) break;
-    out.push(add);
-    used += add.length;
-  }
-  return out.join('\n\n');
-}
-
-async function getContextFromDB(userMessage) {
-  const parts = [];
+export const getContextFromDB = async (userMessage) => {
   try {
-    // FAQ
-    const faq = await Faq.find(
-      { $text: { $search: userMessage } },
-      { score: { $meta: 'textScore' } }
-    )
-      .sort({ score: { $meta: 'textScore' } })
-      .limit(3)
-      .select('question answer');
+    const tokenizer = new natural.WordTokenizer();
+    const stemmer = natural.PorterStemmerFa;
+    const queryTokens = tokenizer.tokenize(userMessage).map((t) => stemmer.stem(t));
 
-    if (faq.length) {
-      parts.push(
-        '--- FAQ ---\n' + faq.map((f) => `Q: ${f.question}\nA: ${f.answer}`).join('\n')
-      );
-    }
-
-    // Courses
-    const courses = await Course.find(
-      { $text: { $search: userMessage } },
-      { score: { $meta: 'textScore' } }
-    )
-      .sort({ score: { $meta: 'textScore' } })
-      .limit(5)
-      .select('title instructor_name registration_status mode start_date price');
-
-    if (courses.length) {
-      parts.push(
-        '--- Courses ---\n' +
-        courses
-          .map(
-            (c) =>
-              `عنوان: ${c.title} | استاد: ${c.instructor_name} | وضعیت: ${c.registration_status} | نوع: ${c.mode} | شروع: ${c.start_date} | قیمت: ${c.price}`
-          )
-          .join('\n')
-      );
-    }
-
-    // Instructors (در صورت وجود مدل)
-    // const instructors = await Instructor.find(
-    //   { $text: { $search: userMessage } },
-    //   { score: { $meta: 'textScore' } }
-    // ).sort({ score: { $meta: 'textScore' } }).limit(3).select('name bio courses');
-    // if (instructors.length) {
-    //   parts.push('--- Instructors ---\n' + instructors.map(i => `نام: ${i.name} | دوره‌ها: ${Array.isArray(i.courses) ? i.courses.join(', ') : i.courses}`).join('\n'));
-    // }
-
-    if (!parts.length) {
-      logger.info(`RAG: No context for "${userMessage}"`);
-      return '';
-    }
-    return minifyContext(parts);
-  } catch (e) {
-    logger.error(`RAG error: ${e.message}`);
-    return '';
-  }
-}
-
-export const routeRequest = async (userMessage, userId = 'anonymous', sessionId = 'anon-session') => {
-  const started = Date.now();
-  let primaryError = null;
-
-  // History
-  const history = await getHistory(sessionId);
-
-  // RAG
-  const dbContext = await getContextFromDB(userMessage);
-
-  const userMessageWithHistory = history
-    ? `### Chat History\n${history}\n\n### User Message\n${userMessage}`
-    : userMessage;
-
-  // --- Primary Call
-  try {
-    const result = await Promise.race([
-      callPrimary(userMessageWithHistory, dbContext), // با variables
-      createTimeout(AI_TIMEOUT_MS),
+    const [courses, faqs] = await Promise.all([
+      Course.find({}, "title instructor_name registration_status mode start_date price").lean(),
+      Faq.find({}, "question answer").lean(),
     ]);
 
-    const clean = sanitizeAnswer(result.text);
-    await appendTurn({ sessionId, userId, role: 'user', text: userMessage });
-    await appendTurn({ sessionId, userId, role: 'assistant', text: clean });
+    const scoreDocs = (docs, textFields) =>
+      docs.map((d) => {
+        const tokens = tokenizer
+          .tokenize(textFields.map((f) => d[f]).join(" "))
+          .map((t) => stemmer.stem(t));
+        const overlap = tokens.filter((t) => queryTokens.includes(t)).length;
+        const score = overlap / Math.max(tokens.length, 1);
+        return { ...d, score };
+      });
+
+    const bestFaqs = scoreDocs(faqs, ["question", "answer"])
+      .filter((f) => f.score > 0.1)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    const bestCourses = scoreDocs(courses, ["title", "instructor_name"])
+      .filter((c) => c.score > 0.1)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    const contextParts = [];
+    if (bestFaqs.length)
+      contextParts.push(
+        bestFaqs.map((f) => `سوال: ${f.question}\nپاسخ: ${f.answer}`).join("\n\n")
+      );
+    if (bestCourses.length)
+      contextParts.push(
+        bestCourses.map(
+          (c) =>
+            `دوره: ${c.title} - استاد: ${c.instructor_name} - قیمت: ${c.price || "نامشخص"}`
+        ).join("\n")
+      );
+
+    return contextParts.join("\n\n");
+  } catch (err) {
+    logger.error(`❌ RAG Error: ${err.message}`);
+    return "";
+  }
+};
+
+export const routeRequest = async (userMessage, userId = "anonymous") => {
+  const start = Date.now();
+  let primaryError = null;
+  const dbContext = await getContextFromDB(userMessage);
+  const history = getHistory(userId);
+
+  const combinedMessage = [
+    history.map((h) => `${h.role === "user" ? "کاربر" : "دستیار"}: ${h.content}`).join("\n"),
+    `سؤال فعلی: ${userMessage}`,
+    dbContext ? `\n📘 داده‌های مرتبط:\n${dbContext}` : "",
+  ].join("\n");
+
+  try {
+    logger.info("🤖 Calling Primary AI...");
+    const result = await Promise.race([
+      callPrimary(combinedMessage),
+      createTimeout(AI_TIMEOUT_MS),
+    ]);
+    const final = composeFinalAnswer([], result.text);
+    appendTurn(userId, { role: "user", content: userMessage });
+    appendTurn(userId, { role: "assistant", content: final.text });
 
     await createLogEntry({
       userId,
-      requestType: 'TEXT',
+      requestType: "TEXT",
       modelUsed: AI_PRIMARY_MODEL,
-      status: 'SUCCESS',
+      status: "SUCCESS",
       prompt: userMessage,
-      response: clean,
-      latency: Date.now() - started,
+      response: final.text,
+      latency: Date.now() - start,
     });
 
-    return { text: clean, didFallback: false };
+    return { text: final.text, didFallback: false };
   } catch (err) {
-    // اگر پرامپت متغیّر را نشناخت → ریتری با تزریق inline
-    if (/Unknown prompt variables:.*db_context/i.test(err.message) || /400/.test(err.message)) {
-      try {
-        const retryResult = await Promise.race([
-          callPrimary(
-            `${dbContext ? `### Context\n${dbContext}\n\n` : ''}${userMessageWithHistory}`,
-            null // null => بدون ارسال db_context به عنوان variable
-          ),
-          createTimeout(AI_TIMEOUT_MS),
-        ]);
-        const clean = sanitizeAnswer(retryResult.text);
-        await appendTurn({ sessionId, userId, role: 'user', text: userMessage });
-        await appendTurn({ sessionId, userId, role: 'assistant', text: clean });
-
-        await createLogEntry({
-          userId,
-          requestType: 'TEXT',
-          modelUsed: AI_PRIMARY_MODEL,
-          status: 'SUCCESS_RETRY_INLINE',
-          prompt: userMessage,
-          response: clean,
-          latency: Date.now() - started,
-        });
-
-        return { text: clean, didFallback: false };
-      } catch (e) {
-        primaryError = e;
-        logger.warn(`Retry-inline failed: ${e.message}`);
-      }
-    } else {
-      primaryError = err;
-      logger.warn(`Primary failed: ${err.message}`);
-    }
+    logger.warn(`⚠️ Primary AI failed: ${err.message}`);
+    primaryError = err;
   }
 
-  // --- Fallback
   if (AI_FALLBACK_ENABLED) {
     try {
-      const fb = await callLocal(userMessageWithHistory, dbContext);
-      const clean = sanitizeAnswer(fb.text);
-
-      await appendTurn({ sessionId, userId, role: 'user', text: userMessage });
-      await appendTurn({ sessionId, userId, role: 'assistant', text: clean });
+      const fallback = await callLocal(userMessage, dbContext);
+      const final = composeFinalAnswer([], fallback.text);
+      appendTurn(userId, { role: "user", content: userMessage });
+      appendTurn(userId, { role: "assistant", content: final.text });
 
       await createLogEntry({
         userId,
-        requestType: 'TEXT',
+        requestType: "TEXT",
         modelUsed: AI_LOCAL_MODEL_NAME,
-        status: 'FALLBACK_SUCCESS',
+        status: "FALLBACK_SUCCESS",
         prompt: userMessage,
-        response: clean,
-        latency: Date.now() - started,
-        errorMessage: `Primary Error: ${primaryError?.message || 'N/A'}`,
+        response: final.text,
+        latency: Date.now() - start,
       });
 
-      return { text: clean, didFallback: true };
-    } catch (fbErr) {
-      primaryError = fbErr;
+      return { text: final.text, didFallback: true };
+    } catch (err) {
+      logger.error(`❌ Fallback AI failed: ${err.message}`);
+      throw err;
     }
   }
 
-  await createLogEntry({
-    userId,
-    requestType: 'TEXT',
-    modelUsed: 'NONE',
-    status: 'ERROR',
-    prompt: userMessage,
-    errorMessage: primaryError?.message || 'All failed',
-    latency: Date.now() - started,
-  });
-
-  throw new Error(primaryError?.message || 'AI unavailable');
+  throw new Error(primaryError?.message || "AI service unavailable.");
 };
