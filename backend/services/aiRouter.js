@@ -1,26 +1,22 @@
 // backend/services/aiRouter.js
-// (مسیردهی اصلاح شده)
+// (REFACTORED for better logging and memory)
 
-import config from '../config/ai.js'; // مسیر صحیح (دو مرحله به بالا، سپس config)
+import config from '../config/ai.js';
 const { AI_TIMEOUT_MS } = config;
-import { createLogEntry } from '../middleware/logger.js'; // مسیر صحیح (دو مرحله به بالا، سپس middleware)
-import logger from '../middleware/logger.js'; // مسیر صحیح
+import { createLogEntry } from '../middleware/logger.js';
+import logger from '../middleware/logger.js';
 
-// --- مسیردهی اصلاح شده برای import از فولدر adapters ---
+// --- Imports from ../ai/adapters/ ---
 import { callPrimary } from '../ai/adapters/openaiPrimary.js';
 import { callLocal } from '../ai/adapters/localFallback.js';
-// ---
 
-// --- مسیردهی اصلاح شده (نسبی) برای import از همین فولدر services ---
-import { getRAGContext } from './dbSearch.js';
+// --- Imports from ./ (services) ---
+import { getContextFromDB } from './dbSearch.js';
 import { getMemory, updateMemory } from './conversationMemory.js';
-import { composeFinalAnswer } from './responseFormatter.js';
-// ---
+import { composeFinalAnswer } from './responseComposer.js';
 
 /**
  * Creates a timeout promise that rejects after a specified duration.
- * @param {number} ms - Milliseconds to wait before rejecting.
- * @returns {Promise<never>}
  */
 const createTimeout = (ms) =>
   new Promise((_, reject) =>
@@ -29,93 +25,78 @@ const createTimeout = (ms) =>
 
 /**
  * Orchestrates the entire AI request lifecycle.
- *
- * @param {string} userMessage - The user's incoming query.
- * @param {string} userId - The unique identifier for the user.
- * @returns {Promise<{text: string, raw: object, provider: string}>}
  */
 export const routeRequest = async (userMessage, userId = 'anonymous') => {
   const start = Date.now();
-  let result, provider, final;
+  let result, provider, final, dbContext;
   let primaryError = null;
-  let dbContext = ''; // Ensure dbContext is in scope
+  let didFallback = false;
 
   try {
-    // --- Step 1 & 2: Get Memory and RAG Context (in parallel) ---
+    // --- Step 1 & 2: Get Memory and RAG Context ---
     logger.info(`🤖 Routing request for user: ${userId}`);
     const [history, retrievedDbContext] = await Promise.all([
-      getMemory(userId, 6), // Get last 6 messages (3 exchanges)
-      getRAGContext(userMessage), // Get context from NEW RAG service
+      getMemory(userId), // Uses new default limit of 20
+      getContextFromDB(userMessage),
     ]);
     dbContext = retrievedDbContext; // Assign to outer scope
+
+    // Handle empty context as requested
+    if (!dbContext || dbContext.trim() === "") {
+      dbContext = "هیچ داده‌ای درباره این موضوع پیدا نشد.";
+    }
 
     const historyString = history
       .map((h) => `${h.role === 'user' ? 'کاربر' : 'دستیار'}: ${h.content}`)
       .join('\n');
 
-    // --- Prep Prompts for Primary (inlined) and Fallback (separate) ---
-    const contextForPrimary =
-      dbContext && dbContext.trim().length > 0
-        ? `--- اطلاعات زمینه ---\n${dbContext}\n---\n\n`
-        : '';
+    // --- Prep Prompts ---
+    const contextForPrimary = `--- اطلاعات زمینه ---\n${dbContext}\n---\n\n`;
     const messageForPrimary = `${contextForPrimary}${historyString}\nکاربر: ${userMessage}`;
-
-    const messageForLocal =
-      historyString.length > 0
-        ? `${historyString}\nکاربر: ${userMessage}`
-        : userMessage;
+    const messageForLocal = `${historyString}\nکاربر: ${userMessage}`;
 
     // --- Step 3: Try Primary AI ---
     try {
       logger.info('Calling Primary AI (with inlined context)...');
       result = await Promise.race([
-        callPrimary(messageForPrimary, null),
+        callPrimary(messageForPrimary, null), // Pass null for dbContext
         createTimeout(AI_TIMEOUT_MS),
       ]);
       provider = 'primary';
       logger.info('✅ Primary AI call successful.');
-
-      final = composeFinalAnswer(result.text);
-
-      updateMemory(userId, { role: 'user', content: userMessage });
-      updateMemory(userId, { role: 'assistant', content: final.text });
     } catch (err) {
       logger.warn(`⚠️ Primary AI failed: ${err.message}`);
       primaryError = err;
       provider = 'fallback';
+      didFallback = true;
     }
 
     // --- Step 4: Try Fallback AI (if primary failed) ---
     if (provider === 'fallback') {
-      try {
-        logger.warn('Calling Fallback AI...');
-        const fallbackResult = await callLocal(messageForLocal, dbContext);
-
-        final = composeFinalAnswer(fallbackResult.text);
-
-        updateMemory(userId, { role: 'user', content: userMessage });
-        updateMemory(userId, { role: 'assistant', content: final.text });
-
-        // Use provider for modelUsed if specific model isn't returned
-        result = fallbackResult; // Store fallback result
-      } catch (fallbackError) {
-        logger.error(`❌ Fallback AI also failed: ${fallbackError.message}`);
-        throw primaryError || new Error('AI service unavailable.');
-      }
+      logger.warn('Calling Fallback AI...');
+      result = await callLocal(messageForLocal, dbContext);
+      // 'result' (from fallback) will be used for logging
     }
 
-    // --- Step 7: Log the interaction (SUCCESS LOG) ---
-    // *** FIX: Added status, modelUsed, and requestType ***
+    // --- Step 5: Format the response ---
+    final = composeFinalAnswer(result.text);
+
+    // --- Step 6: Update Memory ---
+    updateMemory(userId, { role: 'user', content: userMessage });
+    updateMemory(userId, { role: 'assistant', content: final.text });
+
+    // --- Step 7: Log Success ---
+    // (FIXED: Added all required fields)
     await createLogEntry({
       userId,
       prompt: userMessage,
       response: final.text,
       provider,
       latency: Date.now() - start,
-      contextUsed: dbContext && dbContext.length > 0,
-      // --- ADDED FIELDS ---
+      contextUsed: dbContext !== "هیچ داده‌ای درباره این موضوع پیدا نشد.",
+      // --- New fields for schema validation ---
       status: 'success',
-      modelUsed: provider, // Using 'provider' as 'modelUsed'
+      modelUsed: provider,
       requestType: 'ai_query',
     });
 
@@ -124,22 +105,27 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
       raw: result,
       provider,
     };
+
   } catch (error) {
     logger.error(`❌ AI Routing failed: ${error.message}`);
-    // --- Step 7 (Failure Log) ---
-    // *** FIX: Added status, modelUsed, and requestType ***
+
+    // --- Step 7: Log Failure ---
+    // (FIXED: Added all required fields for failure log)
     await createLogEntry({
       userId,
       prompt: userMessage,
-      response: error.message,
+      response: error.message, // Log the error message as the response
       provider: 'error',
       latency: Date.now() - start,
-      contextUsed: dbContext && dbContext.length > 0,
-      // --- ADDED FIELDS ---
+      contextUsed: dbContext ? (dbContext.length > 0 && dbContext !== "هیچ داده‌ای درباره این موضوع پیدا نشد.") : false,
+      // --- New fields for schema validation ---
       status: 'error',
-      modelUsed: provider || 'unknown',
+      modelUsed: provider || 'none',
       requestType: 'ai_query',
+      errorMessage: error.message,
+      didFallback: didFallback,
     });
+
     // Re-throw to be caught by the controller
     throw new Error(
       primaryError?.message || error.message || 'AI service unavailable.'

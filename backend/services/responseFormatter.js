@@ -1,5 +1,6 @@
-// backend/services/responseFormatter.js
-// 🎯 هدف: تولید پاسخ نهایی طبیعی، خلاصه، و مکالمه‌ای برای کاربر
+// backend/services/responseComposer.js
+// 🎯 (REWRITTEN)
+// هدف: تولید پاسخ نهایی طبیعی، خلاصه، و مکالمه‌ای برای کاربر
 // This is the "Naturalizer" layer.
 
 const friendlyEndings = [
@@ -28,50 +29,76 @@ const technicalFilters = [
   /^خلاصه:/gi,
 
   // --- ⭐️ NEW AGGRESSIVE FILTERS ⭐️ ---
-
-  // This removes: "سؤال شما توی بخش پرسش‌های متداول (FAQ) به شکل مستقیم جواب داده نشده."
-  // and "سؤال ... توی بخش پرسش‌های متداول (FAQ) پیدا نمی‌شه،"
-  // It removes ANY sentence fragment that mentions finding (or not finding) something in the FAQ.
+  // "I didn't find in FAQ..."
   /[^.!?]* (FAQ|پرسش‌های متداول|سوالات متداول)[^.!?]*[.!?]?/gi,
-
-  // This removes: "پس بر اساس اطلاعات دوره‌ها به شما پاسخ می‌دم:"
-  // and "اما بر اساس اطلاعات مربوط به ... این مراحل رو باید طی کنید:"
-  // It removes ANY clause starting with "so/but based on..."
+  // "So based on data..."
   /،? (اما|پس|بنابراین) (بر اساس|با توجه به) (اطلاعات|داده‌ها|دوره‌ها|courses)[^.!?]*[.!?]?/gi,
-
-  // This removes any full sentence that just describes the user's question
+  // "Your question is about..."
   /^(سوال|پرسش) شما (به شکل کلی|درباره|در مورد) .* (است|می‌باشد)\.\s*/gi,
-
-  // This removes "so I'm going to..."
+  // "So I'm going to..."
   /،? (پس|بنابراین) سراغ (اطلاعات|داده‌های) .* (می‌روم|می‌گردم|رفتم)(:|،|\.)/gi,
-
-  // This removes "I checked X..."
+  // "I searched for..."
   /(اطلاعات|داده‌های) (دوره‌ها|اساتید) را (بررسی|جستجو) کردم/gi,
+  // "I didn't find in the database"
+  /(در|توی) (دیتابیس|پایگاه داده) (پیدا نکردم|نبود)/gi,
 ];
 
 /**
+ * A simple sentence splitter for summarization.
+ */
+const getSentences = (text) => {
+  // Split by common sentence endings
+  return text.split(/([.!?؟]+)\s+/).reduce((acc, part, index, arr) => {
+    if (index % 2 === 0) {
+      // It's a sentence part
+      const nextPunctuation = arr[index + 1] || '';
+      acc.push(part + nextPunctuation);
+    }
+    return acc;
+  }, []);
+};
+
+/**
+ * (REPLACES composeFinalAnswer)
  * تمیزکننده و بازنویس پاسخ نهایی "Naturalizer"
- * حذف عبارات سیستمی و اضافه‌کردن لحن انسانی
  * @param {string} draftAnswer - The raw text from the AI.
- *s @returns {{text: string, confidence: number}}
+ * @returns {{text: string, confidence: number}}
  */
 export function composeFinalAnswer(draftAnswer = "") {
   let text = (draftAnswer || "").trim();
 
   // 1. 🧹 Run all filters to remove meta-commentary
   technicalFilters.forEach((filter) => {
-    text = text.replace(filter, ' '); // Replace with a space to avoid joining words
+    text = text.replace(filter, ' '); // Replace with space
   });
 
-  // 2. 🔤 Clean up extra whitespace, newlines, and leftover punctuation
+  // 2. 🧹 Clean up whitespace and punctuation
   text = text
     .replace(/\n{2,}/g, '\n')   // Collapse multiple newlines
     .replace(/\s{2,}/g, ' ')    // Collapse multiple spaces
     .replace(/^(،|\.|:|\s)+/g, '') // Remove leading punctuation/space
-    .replace(/(،|\.|:|\s)+$/g, '') // Remove trailing punctuation/space
     .trim();
 
-  // 3. ✨ Add friendly ending
+  // 3. 💰 Handle "Price Awareness"
+  if (/قیمت/g.test(text) && /(ذکر نشده|موجود نیست|؟|نامشخص)/g.test(text)) {
+    text = text.replace(
+      /شهریه .* (؟|نامشخص|موجود نیست|ذکر نشده)/gi,
+      ''
+    );
+    // Add the polite response (if not already there)
+    if (!/مشاور/g.test(text)) {
+      text += '\n\n' + "در مورد قیمت دقیق اطلاعاتی در سیستم ثبت نشده، اما می‌تونم این مورد رو از مشاورین ثبت‌نام براتون بپرسم.";
+    }
+  }
+
+  // 4. ✍️ Summarization step
+  const sentences = getSentences(text);
+  if (sentences.length > 5) {
+    text = sentences.slice(0, 5).join(' ').trim();
+    if (!/[.!?؟]$/.test(text)) text += '...';
+  }
+
+  // 5. ✨ Add friendly ending
   if (text.length > 10 && text.length < 250) {
     if (!/[.!؟👋🌟😊✨]/.test(text.slice(-5))) {
       const ending = friendlyEndings[Math.floor(Math.random() * friendlyEndings.length)];
@@ -79,9 +106,16 @@ export function composeFinalAnswer(draftAnswer = "") {
     }
   }
 
-  // 4. 💔 Handle if filters removed everything
-  if (text.length < 5) { // Increased threshold
-    text = 'متاسفانه الان اطلاعات دقیقی در این مورد ندارم، ولی می‌تونم برات بررسی کنم. چطور میتونم کمکت کنم؟';
+  // 6. 🚫 Avoid repetition
+  text = text.replace(
+    /(اگر (دوست|تمایل) (داشتید|دارید|داشتی)).*(\1)/gi,
+    "$1"
+  );
+
+
+  // 7. 💔 Handle if filters removed everything
+  if (text.length < 5) {
+    text = 'متاسفانه الان اطلاعات دقیقی در این مورد ندارم، ولی می‌تونم برات بررسی کنم. چطور میتونم کمکت کنم؟ 😥';
   }
 
   return {
