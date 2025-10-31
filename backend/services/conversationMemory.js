@@ -1,19 +1,22 @@
 // backend/services/conversationMemory.js
 
-const conversationStore = new Map();
+const memory = new Map();
 
-export function getHistory(userId, maxTurns = 6) {
-  const history = conversationStore.get(userId) || [];
-  return history.slice(-maxTurns);
+/**
+ * دریافت تاریخچه مکالمه‌ی کاربر
+ */
+export function getHistory(userId, limit = 6) {
+  const history = memory.get(userId) || [];
+  return history.slice(-limit);
 }
 
+/**
+ * افزودن پیام جدید به حافظه مکالمه
+ */
 export function appendTurn(userId, turn) {
-  if (!conversationStore.has(userId)) {
-    conversationStore.set(userId, []);
-  }
-  const turns = conversationStore.get(userId);
-  turns.push({ role: turn.role, content: turn.content, timestamp: Date.now() });
-
-  if (turns.length > 10) turns.shift();
-  conversationStore.set(userId, turns);
+  if (!memory.has(userId)) memory.set(userId, []);
+  const h = memory.get(userId);
+  h.push({ role: turn.role, content: turn.content, time: Date.now() });
+  if (h.length > 10) h.shift();
+  memory.set(userId, h);
 }
