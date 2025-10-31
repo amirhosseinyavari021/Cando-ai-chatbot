@@ -29,6 +29,15 @@ const technicalFilters = [
   /پاسخ:/gi, // Remove "پاسخ:" prefix if AI copies it
   /^نتیجه:/gi,
   /^خلاصه:/gi,
+
+  // --- ⭐️ NEW FILTERS TO FIX YOUR EXAMPLE ⭐️ ---
+  // This targets: "...توی بخش FAQ نبود..."
+  /(سوال شما|این سوال) .* (FAQ|سوالات متداول|پرسش‌ها) (نبود|پیدا نشد)/gi,
+  // This targets: "...پس اطلاعات دوره‌ها و اساتید رو بررسی کردم."
+  /(،? (پس|بنابراین) .* (بررسی کردم|جستجو کردم))/gi,
+  // This is a general filter for "I checked the data"
+  /(اطلاعات|داده‌های) (دوره‌ها|اساتید) را (بررسی|جستجو) کردم/gi,
+  // --- END NEW FILTERS ---
 ];
 
 /**
