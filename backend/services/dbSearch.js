@@ -1,14 +1,19 @@
+// backend/services/dbSearch.js
+// (FIXED IMPORT PATHS)
+
 import mongoose from 'mongoose';
 import natural from 'natural';
-import Course from '../../models/Course.js';
-import Faq from '../../models/Faq.js';
-import logger from '../../middleware/logger.js';
+
+// --- FIX: Corrected relative paths (../) ---
+import Course from '../models/Course.js';
+import Faq from '../models/Faq.js';
+import logger from '../middleware/logger.js';
+// --- END FIX ---
 
 const MAX_CONTEXT_CHARS = 4000;
 const { WordTokenizer, PorterStemmer } = natural;
 const tokenizer = new WordTokenizer();
-// Using PorterStemmer as a generic stemmer; for Persian, this is basic
-// but matches the original implementation's intent.
+// Using PorterStemmer as a generic stemmer
 const stemmer = PorterStemmer;
 
 /**
