@@ -1,36 +1,37 @@
 // backend/controllers/aiController.js
-import asyncHandler from 'express-async-handler';
-import { routeRequest } from '../services/aiRouter.js';
+
+import asyncHandler from "express-async-handler";
+import { routeRequest } from "../services/aiRouter.js";
 
 /**
- * @desc    Process an AI chat message
+ * @desc    Handle AI chat message
  * @route   POST /api/ai/ask
- * @access  Public
+ * @access  Public (can be protected later)
  */
-export const askQuestion = asyncHandler(async (req, res) => {
-  const { message, userId, sessionId } = req.body || {};
+const askQuestion = asyncHandler(async (req, res) => {
+  const { message, userId } = req.body;
 
   if (!message || !message.trim()) {
-    return res.status(400).json({ success: false, error: 'Message is required.' });
+    res.status(400);
+    throw new Error("پیام ارسالی خالی است.");
   }
 
   try {
-    const result = await routeRequest(
-      message.trim(),
-      userId || 'anonymous',
-      sessionId || 'anon-session'
-    );
+    const result = await routeRequest(message, userId || "anonymous");
 
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
       message: result.text,
       fallback: result.didFallback,
     });
   } catch (error) {
-    // خروجی سازگار برای UI (بدون لو دادن جزییات داخلی)
-    return res.status(503).json({
+    console.error("❌ AI Error:", error.message);
+    res.status(503).json({
       success: false,
-      error: 'در حال حاضر امکان پاسخ‌گویی وجود ندارد. لطفاً کمی بعد دوباره تلاش کنید.',
+      message:
+        "در حال حاضر دسترسی به سرویس هوش مصنوعی ممکن نیست. لطفاً کمی بعد دوباره تلاش کنید.",
     });
   }
 });
+
+export { askQuestion };
