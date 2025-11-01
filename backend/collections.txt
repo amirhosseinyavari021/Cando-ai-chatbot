@@ -1,0 +1,11 @@
+
+'chats'
+'instructors'
+'conversations'
+'courses'
+'users'
+'faq'
+'datasets'
+'faqs'
+'logs'
+

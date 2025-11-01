@@ -1,0 +1,9 @@
+{
+  "generated_at": "2025-11-01T15:44:24-05:00",
+  "collections": [
+    {"name": "conversations", "count": 6, "file": "export_conversations.json", "sha256": "0a362ead4a862baca32a28e1154b41e418490b66d06731ab009b63c0670f2b66"},
+    {"name": "courses", "count": 8, "file": "export_courses.json", "sha256": "c469fca8c25754c6a7e3b4d588370ba170841750f5924288774892f7eac0b8ca"},
+    {"name": "faq", "count": 3, "file": "export_faq.json", "sha256": "84d519148bae8793e9ecb82878f5331d91de6f8b9b3cfb84a8fa523e1691d76b"},
+    {"name": "logs", "count": 11, "file": "export_logs.json", "sha256": "f960dbc3946d7528add3282af17ec93901e37ddc4e28e072a531d5925e9983b6"}
+  ]
+}
