@@ -12,19 +12,27 @@ const resources = {
   },
 };
 
+const updateDocumentLanguage = (lng) => {
+  if (typeof document === 'undefined') return;
+  document.body.dir = i18n.dir(lng);
+  document.documentElement.lang = lng;
+};
+
 i18n.use(initReactI18next).init({
   resources,
-  lng: 'en', // Default language
-  fallbackLng: 'en',
+  lng: 'fa', // پیش‌فرض: فارسی
+  fallbackLng: 'fa',
   interpolation: {
     escapeValue: false, // React already escapes values
   },
 });
 
+// Ensure initial attributes match the default language
+updateDocumentLanguage(i18n.language);
+
 // This effect updates the <html> tag's dir and lang attributes
 i18n.on('languageChanged', (lng) => {
-  document.body.dir = i18n.dir(lng);
-  document.documentElement.lang = lng;
+  updateDocumentLanguage(lng);
 });
 
 export default i18n;
