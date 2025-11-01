@@ -26,11 +26,25 @@ const createTimeout = (ms) =>
 /**
  * Orchestrates the entire AI request lifecycle.
  */
+const detectEnglishPreference = (text = '') => {
+  const englishLetters = (text.match(/[A-Za-z]/g) || []).length;
+  const persianLetters = (text.match(/[\u0600-\u06FF]/g) || []).length;
+
+  if (englishLetters === 0) return false;
+  if (persianLetters === 0) return true;
+  return englishLetters > persianLetters;
+};
+
 export const routeRequest = async (userMessage, userId = 'anonymous') => {
   const start = Date.now();
   let result, provider, final, dbContext;
   let primaryError = null;
   let didFallback = false;
+
+  const preferEnglish = detectEnglishPreference(userMessage);
+  const languageInstruction = preferEnglish
+    ? 'Language instruction: respond entirely in English with a clear and friendly tone.'
+    : 'دستور زبان: پاسخ را کاملاً به فارسی و با لحنی صمیمی ارائه کن.';
 
   try {
     // --- Step 1 & 2: Get Memory and RAG Context ---
@@ -52,8 +66,21 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
 
     // --- Prep Prompts ---
     const contextForPrimary = `--- اطلاعات زمینه ---\n${dbContext}\n---\n\n`;
-    const messageForPrimary = `${contextForPrimary}${historyString}\nکاربر: ${userMessage}`;
-    const messageForLocal = `${historyString}\nکاربر: ${userMessage}`;
+    const messageForPrimary = [
+      contextForPrimary,
+      languageInstruction,
+      historyString,
+      `کاربر: ${userMessage}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const messageForLocal = [
+      languageInstruction,
+      historyString,
+      `کاربر: ${userMessage}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
 
     // --- Step 3: Try Primary AI ---
     try {
@@ -74,12 +101,12 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
     // --- Step 4: Try Fallback AI (if primary failed) ---
     if (provider === 'fallback') {
       logger.warn('Calling Fallback AI...');
-      result = await callLocal(messageForLocal, dbContext);
+      result = await callLocal(messageForLocal, dbContext, { preferEnglish });
       // 'result' (from fallback) will be used for logging
     }
 
     // --- Step 5: Format the response ---
-    final = composeFinalAnswer(result.text);
+    final = composeFinalAnswer(result.text, { preferEnglish });
 
     // --- Step 6: Update Memory ---
     updateMemory(userId, { role: 'user', content: userMessage });

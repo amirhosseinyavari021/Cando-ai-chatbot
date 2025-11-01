@@ -6,12 +6,20 @@
 /**
  * A list of friendly, natural closings in Persian.
  */
-const friendlyEndings = [
+const persianFriendlyEndings = [
   'اگه سوال دیگه‌ای هم داشتی خوشحال میشم کمکت کنم 🌟',
   'امیدوارم کمکت کرده باشه! 😊',
   'کاری داشتی بازم بپرس! 👋',
   'خوشحال میشم بتونم بیشتر راهنماییت کنم.',
   'روز خوبی داشته باشی! ✨',
+];
+
+const englishFriendlyEndings = [
+  'Let me know if there’s anything else I can help with! 😊',
+  'Happy to help if you have more questions. ✨',
+  'Feel free to ask for anything else! 👋',
+  'I’m here if you need anything else. 🌟',
+  'Hope this helps! 😊',
 ];
 
 /**
@@ -60,7 +68,8 @@ const technicalFilters = [
  * @param {string} draftAnswer - The raw text from the AI.
  * @returns {{text: string, confidence: number}}
  */
-export function composeFinalAnswer(draftAnswer = "") {
+export function composeFinalAnswer(draftAnswer = "", options = {}) {
+  const { preferEnglish = false } = options;
   let text = draftAnswer.trim();
 
   // 1. 🧹 حذف توضیحات فنی و بی‌ربط
@@ -78,17 +87,22 @@ export function composeFinalAnswer(draftAnswer = "") {
   // 4. ✨ بازنویسی پایان متن (دعوت به تعامل انسانی)
   // If the answer is short and doesn't already have a friendly closing.
   if (text.length > 10 && text.length < 250) {
-    // Check if it already ends with a greeting or emoji
-    if (!/[.!؟👋🌟😊✨]/.test(text.slice(-5))) {
-      // Add a random friendly ending
-      const ending = friendlyEndings[Math.floor(Math.random() * friendlyEndings.length)];
+    const endingPool = preferEnglish ? englishFriendlyEndings : persianFriendlyEndings;
+    const endingAlreadyPresent = preferEnglish
+      ? /[.!?👋🌟😊✨]/.test(text.slice(-5))
+      : /[.!؟👋🌟😊✨]/.test(text.slice(-5));
+
+    if (!endingAlreadyPresent && endingPool.length > 0) {
+      const ending = endingPool[Math.floor(Math.random() * endingPool.length)];
       text += `\n\n${ending}`;
     }
   }
 
   // 5. 💔 مدیریت پاسخ خالی (اگر فیلترها همه چیز را پاک کردند)
   if (text.length === 0) {
-    text = 'متاسفانه الان اطلاعات دقیقی در این مورد ندارم، ولی می‌تونم برات بررسی کنم. چطور میتونم کمکت کنم؟';
+    text = preferEnglish
+      ? "Unfortunately I don't have precise information about this right now, but I can check with our advisors for you. How else can I help?"
+      : 'متاسفانه الان اطلاعات دقیقی در این مورد ندارم، ولی می‌تونم برات بررسی کنم. چطور میتونم کمکت کنم؟';
   }
 
   return {

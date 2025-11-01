@@ -26,7 +26,8 @@ if (AI_LOCAL_MODEL_URL && AI_LOCAL_MODEL_NAME) {
  * @returns {Promise<{text: string, raw: object}>}
  * @throws {Error} If API call fails or is not configured.
  */
-export const callLocal = async (userMessage, dbContext) => {
+export const callLocal = async (userMessage, dbContext, options = {}) => {
+  const { preferEnglish = false } = options;
   if (!localOpenai) {
     throw new Error('Local Fallback AI is not configured.');
   }
@@ -40,6 +41,12 @@ export const callLocal = async (userMessage, dbContext) => {
     {
       role: 'system',
       content: LOCAL_SYSTEM_PROMPT,
+    },
+    {
+      role: 'system',
+      content: preferEnglish
+        ? 'Respond entirely in English. Keep the tone friendly, concise, and helpful.'
+        : 'پاسخ را کاملاً به فارسی و با لحنی دوستانه، صمیمی و مختصر ارائه کن.',
     },
   ];
 

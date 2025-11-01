@@ -6,12 +6,7 @@ import ThemeToggle from '../ThemeToggle/ThemeToggle'; // Ensure ThemeToggle is i
 const appVersion = import.meta.env.PACKAGE_VERSION;
 
 const Navbar = () => {
-  const { t, i18n } = useTranslation();
-
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'fa' : 'en';
-    i18n.changeLanguage(newLang);
-  };
+  const { t } = useTranslation();
 
   return (
     <nav className={styles.navbar}>
@@ -30,9 +25,6 @@ const Navbar = () => {
         {/* Ensure this container and its children are present */}
         <div className={styles.controlsArea}>
           <ThemeToggle /> {/* Theme toggle button */}
-          <button onClick={toggleLanguage} className={styles.langToggle}>
-            {i18n.language === 'en' ? 'فارسی' : 'English'} {/* Language toggle button */}
-          </button>
         </div>
       </div>
     </nav>

@@ -54,7 +54,7 @@ const ChatBox = () => {
           <div className={styles.errorDisplay}>
             <p>{error}</p>
             <button onClick={clearError} className={styles.errorClearButton}>
-              {t('chat_try_again', 'Try Again')}
+              {t('chat_try_again', 'تلاش مجدد')}
             </button>
           </div>
         )}
