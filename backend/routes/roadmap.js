@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import asyncHandler from 'express-async-handler';
+import Roadmap from '../models/Roadmap.js'; // <-- Note .js extension
+
 const router = express.Router();
-const asyncHandler = require('express-async-handler');
-const Roadmap = require('../models/Roadmap');
 
 /**
  * @desc    Get all available roadmaps (list view)
@@ -22,10 +23,9 @@ const getAllRoadmaps = asyncHandler(async (req, res) => {
  */
 const getRoadmapBySlug = asyncHandler(async (req, res) => {
   const { role_slug } = req.params;
-  
-  // Find by slug, case-insensitive
-  const roadmap = await Roadmap.findOne({ 
-    role_slug: { $regex: new RegExp(`^${role_slug}$`, 'i') } 
+
+  const roadmap = await Roadmap.findOne({
+    role_slug: { $regex: new RegExp(`^${role_slug}$`, 'i') }
   });
 
   if (roadmap) {
@@ -36,8 +36,7 @@ const getRoadmapBySlug = asyncHandler(async (req, res) => {
   }
 });
 
-// Define routes
 router.route('/').get(getAllRoadmaps);
 router.route('/:role_slug').get(getRoadmapBySlug);
 
-module.exports = router;
+export default router;

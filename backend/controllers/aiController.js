@@ -1,14 +1,14 @@
-const asyncHandler = require('express-async-handler');
-const aiRouter = require('../services/aiRouter');
-const {
+import asyncHandler from 'express-async-handler';
+import aiRouter from '../services/aiRouter.js';
+import {
   getConversationHistory,
   addMessage,
-} = require('../services/conversationMemory');
+} from '../services/conversationMemory.js';
 
 // New imports
-const { detectLanguage, inferRoleSlug } = require('../utils/nlu');
-const sanitizeOutput = require('../utils/sanitizeOutput');
-const Roadmap = require('../models/Roadmap');
+import { detectLanguage, inferRoleSlug } from '../utils/nlu.js';
+import sanitizeOutput from '../utils/sanitizeOutput.js';
+import Roadmap from '../models/Roadmap.js';
 
 /**
  * @desc    Get AI response or structured roadmap data
@@ -28,7 +28,6 @@ const getAIResponse = asyncHandler(async (req, res) => {
 
     if (roadmap) {
       // --- Roadmap Found ---
-      // Send structured data for the frontend to render
       const responsePayload = {
         type: 'roadmap',
         data: roadmap,
@@ -36,38 +35,35 @@ const getAIResponse = asyncHandler(async (req, res) => {
       };
 
       await addMessage(conversationId, 'user', message);
-      await addMessage(conversationId, 'bot', responsePayload); // Store object in history
+      await addMessage(conversationId, 'bot', responsePayload);
 
       return res.json({
-        message: responsePayload, // Send object to frontend
+        message: responsePayload,
         conversationId: conversationId,
       });
 
     } else {
       // --- Role Detected, Roadmap NOT Found ---
-      // Respond with polite "not added yet" message in the user's language
       const text =
         lang === 'fa'
           ? 'الان این مسیر هنوز اضافه نشده؛ می‌خوای برات بررسی کنم؟'
           : 'That roadmap isn’t added yet; want me to check and add it for you?';
 
-      // Sanitize this fallback response
       const sanitizedText = sanitizeOutput(text);
 
       await addMessage(conversationId, 'user', message);
       await addMessage(conversationId, 'bot', sanitizedText);
 
       return res.json({
-        message: sanitizedText, // Send as plain text
+        message: sanitizedText,
         conversationId: conversationId,
       });
     }
   }
 
   // 3. --- No Roadmap Intent ---
-  // Proceed to general AI logic as before
   const history = await getConversationHistory(conversationId);
-  const aiResult = await aiRouter.handle(message, history); // e.g., { text: '...' }
+  const aiResult = await aiRouter.handle(message, history);
 
   // 4. Sanitize the *final AI output*
   const sanitizedResponse = sanitizeOutput(aiResult.text);
@@ -76,9 +72,9 @@ const getAIResponse = asyncHandler(async (req, res) => {
   await addMessage(conversationId, 'bot', sanitizedResponse);
 
   res.json({
-    message: sanitizedResponse, // Send the sanitized text
+    message: sanitizedResponse,
     conversationId: aiResult.conversationId || conversationId,
   });
 });
 
-module.exports = { getAIResponse };
+export { getAIResponse };

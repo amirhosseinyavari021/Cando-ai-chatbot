@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const TrackSchema = new mongoose.Schema({
   order: {
@@ -47,10 +47,10 @@ const RoadmapSchema = new mongoose.Schema(
     tracks: [TrackSchema],
   },
   {
-    // Explicitly set the collection name as requested
     collection: 'roadmap',
     timestamps: true,
   }
 );
 
-module.exports = mongoose.model('Roadmap', RoadmapSchema);
+const Roadmap = mongoose.model('Roadmap', RoadmapSchema);
+export default Roadmap;

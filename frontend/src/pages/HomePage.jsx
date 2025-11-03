@@ -1,7 +1,8 @@
 import React from 'react';
 import ChatBox from '../components/Chat/ChatBox';
 import Layout from '../components/Layout/Layout';
-import TopNotice from '../components/Chat/TopNotice'; // Import the new component
+// Corrected import path, assuming TopNotice.jsx is now named correctly
+import TopNotice from '../components/Chat/TopNotice';
 
 const HomePage = () => {
   return (

@@ -15,7 +15,7 @@ function inferRoleSlug(text) {
   if (t.includes('devops') || t.includes('دواپس') || t.includes('لینوکس')) {
     return 'linux-devops';
   }
-  
+
   return null;
 }
 
@@ -29,7 +29,7 @@ function detectLanguage(text) {
   return /[آ-ی]/.test(text) ? 'fa' : 'en';
 }
 
-module.exports = {
+export {
   inferRoleSlug,
   detectLanguage,
 };

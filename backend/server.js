@@ -1,16 +1,27 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const path = require('path');
-const connectDB = require('./config/db');
-const { errorHandler } = require('./middleware/errorHandler');
-const { setupLogger, httpLogger } = require('./middleware/logger');
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import path, { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import connectDB from './config/db.js'; // Added .js
+import { errorHandler } from './middleware/errorHandler.js'; // Added .js
+import { setupLogger, httpLogger } from './middleware/logger.js'; // Added .js
+
+// Import routes
+import aiRoutes from './routes/aiRoutes.js'; // Added .js
+import adminRoutes from './routes/adminRoutes.js'; // Added .js
+import logRoutes from './routes/logRoutes.js'; // Added .js
+import roadmapRoutes from './routes/roadmap.js'; // Added .js
 
 // Load env vars
 dotenv.config();
 
 // Connect to database
 connectDB();
+
+// --- ESM-safe __dirname setup ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 
@@ -30,16 +41,14 @@ app.use(
 );
 
 // --- API Routes ---
-app.use('/api/ai', require('./routes/aiRoutes'));
-app.use('/api/admin', require('./routes/adminRoutes'));
-app.use('/api/logs', require('./routes/logRoutes'));
-
-// --- NEW ROADMAP ROUTES ---
-app.use('/api/roadmap', require('./routes/roadmap'));
+app.use('/api/ai', aiRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/logs', logRoutes);
+app.use('/api/roadmap', roadmapRoutes); // Use the new roadmap routes
 
 // --- Serve Frontend ---
 if (process.env.NODE_ENV === 'production') {
-  const buildPath = path.join(__dirname, '../frontend/dist');
+  const buildPath = join(__dirname, '../frontend/dist'); // Use join
   app.use(express.static(buildPath));
 
   app.get('*', (req, res) =>
