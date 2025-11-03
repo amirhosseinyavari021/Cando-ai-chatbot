@@ -132,3 +132,4 @@ export const routeRequest = async (userMessage, userId = 'anonymous') => {
     );
   }
 };
+// FIX: '}' اضافه در انتهای فایل حذف شد.

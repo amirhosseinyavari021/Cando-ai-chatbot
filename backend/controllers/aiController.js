@@ -1,41 +1,44 @@
 import asyncHandler from 'express-async-handler';
-import aiRouter from '../services/aiRouter.js';
+// FIX: ایمپورت تابع صحیح از aiRouter
+import { routeRequest } from '../services/aiRouter.js';
 import {
-  getConversationHistory,
-  addMessage,
+  // FIX: استفاده از نام‌های توابع یکسان‌سازی شده
+  getMemory,
+  updateMemory,
 } from '../services/conversationMemory.js';
 
-// New imports
+// ایمپورت‌های مربوط به NLU و Roadmap
 import { detectLanguage, inferRoleSlug } from '../utils/nlu.js';
 import sanitizeOutput from '../utils/sanitizeOutput.js';
 import Roadmap from '../models/Roadmap.js';
 
 /**
- * @desc    Get AI response or structured roadmap data
+ * @desc    دریافت پاسخ AI یا داده ساختاریافته roadmap
  * @route   POST /api/ai/chat
  * @access  Public
  */
 const getAIResponse = asyncHandler(async (req, res) => {
   const { message, conversationId } = req.body;
 
-  // 1. Run NLU checks
+  // ۱. اجرای NLU
   const lang = detectLanguage(message);
   const roleSlug = inferRoleSlug(message);
 
-  // 2. Check for Roadmap Intent
+  // ۲. بررسی هدف Roadmap
   if (roleSlug) {
     const roadmap = await Roadmap.findOne({ role_slug: roleSlug, language: lang });
 
     if (roadmap) {
-      // --- Roadmap Found ---
+      // --- Roadmap پیدا شد ---
       const responsePayload = {
         type: 'roadmap',
         data: roadmap,
         lang: lang,
       };
 
-      await addMessage(conversationId, 'user', message);
-      await addMessage(conversationId, 'bot', responsePayload);
+      // FIX: استفاده از updateMemory
+      await updateMemory(conversationId, { role: 'user', content: message });
+      await updateMemory(conversationId, { role: 'bot', content: responsePayload });
 
       return res.json({
         message: responsePayload,
@@ -43,7 +46,7 @@ const getAIResponse = asyncHandler(async (req, res) => {
       });
 
     } else {
-      // --- Role Detected, Roadmap NOT Found ---
+      // --- رول شناسایی شد، Roadmap موجود نیست ---
       const text =
         lang === 'fa'
           ? 'الان این مسیر هنوز اضافه نشده؛ می‌خوای برات بررسی کنم؟'
@@ -51,8 +54,9 @@ const getAIResponse = asyncHandler(async (req, res) => {
 
       const sanitizedText = sanitizeOutput(text);
 
-      await addMessage(conversationId, 'user', message);
-      await addMessage(conversationId, 'bot', sanitizedText);
+      // FIX: استفاده از updateMemory
+      await updateMemory(conversationId, { role: 'user', content: message });
+      await updateMemory(conversationId, { role: 'bot', content: sanitizedText });
 
       return res.json({
         message: sanitizedText,
@@ -61,19 +65,22 @@ const getAIResponse = asyncHandler(async (req, res) => {
     }
   }
 
-  // 3. --- No Roadmap Intent ---
-  const history = await getConversationHistory(conversationId);
-  const aiResult = await aiRouter.handle(message, history);
+  // ۳. --- هدف Roadmap نبود ---
+  // ارجاع به AI عمومی (aiRouter)
+  // FIX: aiRouter خودش تاریخچه را مدیریت می‌کند و لاگ می‌زند.
+  // دیگر نیازی به ارسال تاریخچه یا ذخیره لاگ در اینجا نیست.
 
-  // 4. Sanitize the *final AI output*
+  // FIX: فراخوانی تابع صحیح (routeRequest) و پاس دادن conversationId به عنوان userId
+  const aiResult = await routeRequest(message, conversationId);
+
+  // ۴. ضدعفونی کردن خروجی نهایی AI
   const sanitizedResponse = sanitizeOutput(aiResult.text);
 
-  await addMessage(conversationId, 'user', message);
-  await addMessage(conversationId, 'bot', sanitizedResponse);
+  // aiRouter خودش تاریخچه را آپدیت کرده است، پس ما اینجا کاری نمی‌کنیم.
 
   res.json({
-    message: sanitizedResponse,
-    conversationId: aiResult.conversationId || conversationId,
+    message: sanitizedResponse, // ارسال متن ضدعفونی شده
+    conversationId: conversationId,
   });
 });
 

@@ -1,19 +1,27 @@
 import { v4 as uuidv4 } from 'uuid';
 
-// این یک حافظه موقت (in-memory) ساده است.
-// در محیط پروداکشن، این باید به دیتابیس یا Redis متصل شود.
 const conversationStore = new Map();
+const MAX_HISTORY_LENGTH = 20; // مطابق با فایل aiRouter شما
 
-const MAX_HISTORY_LENGTH = 50; // حداکثر تعداد پیام‌ها در تاریخچه
+/**
+ * تاریخچه یک مکالمه را برمی‌گرداند.
+ * @param {string} conversationId - آی‌دی مکالمه
+ * @returns {Promise<Array<object>>} - آرایه‌ای از پیام‌ها
+ */
+const getMemory = async (conversationId) => {
+  if (!conversationId) {
+    return [];
+  }
+  return conversationStore.get(conversationId) || [];
+};
 
 /**
  * یک پیام به تاریخچه مکالمه اضافه می‌کند.
- * @param {string | null} conversationId - آی‌دی مکالمه
- * @param {'user' | 'bot'} role - نقش فرستنده
- * @param {string | object} content - محتوای پیام
- * @returns {Promise<string>} - آی‌دی مکالمه (جدید یا موجود)
+ * @param {string} conversationId - آی‌دی مکالمه
+ * @param {object} messageObject - { role: 'user' | 'bot' | 'assistant', content: string }
+ * @returns {Promise<string>} - آی‌دی مکالمه
  */
-const addMessage = async (conversationId, role, content) => {
+const updateMemory = async (conversationId, messageObject) => {
   let id = conversationId || uuidv4();
 
   if (!conversationStore.has(id)) {
@@ -21,9 +29,9 @@ const addMessage = async (conversationId, role, content) => {
   }
 
   const history = conversationStore.get(id);
-  history.push({ role, content });
+  history.push(messageObject);
 
-  // فقط ۱۰ پیام آخر را نگه می‌داریم
+  // فقط ۲۰ پیام آخر را نگه می‌داریم
   if (history.length > MAX_HISTORY_LENGTH) {
     conversationStore.set(id, history.slice(-MAX_HISTORY_LENGTH));
   } else {
@@ -31,18 +39,6 @@ const addMessage = async (conversationId, role, content) => {
   }
 
   return id;
-};
-
-/**
- * تاریخچه یک مکالمه را برمی‌گرداند.
- * @param {string} conversationId - آی‌دی مکالمه
- * @returns {Promise<Array<object>>} - آرایه‌ای از پیام‌ها
- */
-const getConversationHistory = async (conversationId) => {
-  if (!conversationId) {
-    return [];
-  }
-  return conversationStore.get(conversationId) || [];
 };
 
 /**
@@ -56,9 +52,8 @@ const clearHistory = async (conversationId) => {
   }
 };
 
-// توابع را با سینتکس ES Module اکسپورت می‌کنیم
 export {
-  addMessage,
-  getConversationHistory,
+  getMemory,
+  updateMemory,
   clearHistory,
 };
