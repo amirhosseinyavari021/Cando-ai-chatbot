@@ -1,24 +1,16 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
-import styles from './Loading.module.css';
 
-const Loading = ({ fallbackTriggered }) => {
-  const { t } = useTranslation();
-
+const Loading = () => {
   return (
-    <div className={styles.loadingContainer}>
-      <img src="/logo.png" alt="Cando Logo" className={styles.logo} />
-      <div className={styles.spinner}></div>
-      {fallbackTriggered && (
-        <span className={styles.fallbackText}>
-          {'در حال سوییچ به مسیر پشتیبان…'}
-        </span>
-      )}
-      {!fallbackTriggered && (
-         <span className={styles.loadingText}>
-          {'در حال پردازش...'}
-         </span>
-      )}
+    <div className="flex justify-start">
+      {/* FIX: استفاده از رنگ‌های با کنتراست بالاتر */}
+      <div className="p-4 rounded-lg max-w-lg bg-gray-200 dark:bg-dark-card">
+        <div className="animate-pulse space-y-3">
+          {/* FIX: ریتم منطقی‌تر و کنتراست بهتر برای میله‌ها */}
+          <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
+        </div>
+      </div>
     </div>
   );
 };

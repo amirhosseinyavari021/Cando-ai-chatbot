@@ -1,21 +1,18 @@
 import React from 'react';
 import ChatBox from '../components/Chat/ChatBox';
-import Layout from '../components/Layout/Layout';
-// Corrected import path, assuming TopNotice.jsx is now named correctly
 import TopNotice from '../components/Chat/TopNotice';
 
+// این کامپوننت *توسط* App.jsx *داخل* Layout رندر می‌شود
 const HomePage = () => {
   return (
-    <Layout>
-      <div className="flex flex-col items-center justify-center w-full h-full">
-        <div className="w-full max-w-3xl mx-auto">
-          {/* Add the new notice here */}
-          <TopNotice />
+    // flex-1 باعث می‌شود چت‌باکس ارتفاع باقی‌مانده را پر کند
+    <div className="flex flex-col flex-1 w-full">
+      {/* FIX: بنر اکنون داخل کانتینر max-width قرار دارد و هم‌تراز است */}
+      <TopNotice />
 
-          <ChatBox />
-        </div>
-      </div>
-    </Layout>
+      {/* ChatBox تمام فضای باقی‌مانده را می‌گیرد */}
+      <ChatBox />
+    </div>
   );
 };
 

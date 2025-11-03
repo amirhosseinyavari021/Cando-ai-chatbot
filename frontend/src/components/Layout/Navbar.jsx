@@ -1,38 +1,37 @@
 import React from 'react';
-import styles from './Navbar.module.css';
 import { useTheme } from '../../context/ThemeContext';
-import ThemeToggle from '../ThemeToggle/ThemeToggle'; // Assuming this was here
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
 
 const Navbar = () => {
   const { theme } = useTheme();
 
-  // Any { t, i18n } = useTranslation(); and related logic has been REMOVED.
-  // The language toggle button/dropdown has been REMOVED.
-
   return (
-    <nav
-      className={`${styles.navbar} bg-gray-100 dark:bg-gray-900 shadow-md`}
-    >
-      <div className={styles.navContainer}>
-        <div className={styles.logo}>
+    // FIX: هدر چسبان (sticky) با یک خط (border-b) واحد
+    <nav className="sticky top-0 z-50 w-full bg-white dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border shadow-sm">
+      {/* FIX: محتوای Navbar نیز در یک کانتینر max-w-4xl قرار می‌گیرد
+        تا دقیقاً با محتوای چت‌باکس زیرین هم‌تراز باشد.
+      */}
+      <div className="flex items-center justify-between w-full max-w-4xl mx-auto p-4">
+        {/* لوگو */}
+        <div className="flex items-center gap-3">
           <img
-            src={
-              theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'
-            } // Assuming you have different logos
+            src={theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'}
             alt="Cando Logo"
-            className={styles.logoImg}
-            onError={(e) => { e.target.src = '/logo.png' }} // Fallback logo
+            // FIX: تعیین اندازه مشخص برای جلوگیری از CLS
+            className="h-8 w-auto"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = '/logo.png';
+            }}
           />
-          <span className={styles.logoText}>Cando AI</span>
+          <span className="font-semibold text-lg text-gray-900 dark:text-white">
+            Cando AI
+          </span>
         </div>
 
-        <div className={styles.navLinks}>
-          {/* Other nav links would go here */}
-        </div>
-
-        <div className={styles.navControls}>
+        {/* کنترل‌ها (تغییر تم) */}
+        <div className="flex items-center gap-4">
           <ThemeToggle />
-          {/* The Language Toggle component is no longer here. */}
         </div>
       </div>
     </nav>

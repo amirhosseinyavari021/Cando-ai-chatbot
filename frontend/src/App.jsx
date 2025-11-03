@@ -1,18 +1,25 @@
-import { Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout/Layout';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from './context/ThemeContext';
+import Layout from './components/Layout/Layout'; // لِی‌اوت اصلی
 import HomePage from './pages/HomePage';
-// import AdminPage from './pages/AdminPage'; // For later
-// import LoginPage from './pages/LoginPage'; // For later
+import './i18n';
 
 function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        {/* <Route path="/admin" element={<AdminPage />} /> */}
-        {/* <Route path="/login" element={<LoginPage />} /> */}
-      </Routes>
-    </Layout>
+    <ThemeProvider>
+      <Router>
+        {/* FIX: Layout فقط یک بار در اینجا رندر می‌شود و تمام صفحات را در بر می‌گیرد.
+          این کار مشکل هدرهای تکراری را حل می‌کند.
+        */}
+        <Layout>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            {/* صفحات دیگر در صورت وجود... */}
+          </Routes>
+        </Layout>
+      </Router>
+    </ThemeProvider>
   );
 }
 
