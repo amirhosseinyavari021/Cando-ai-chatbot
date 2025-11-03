@@ -1,19 +1,36 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 
-// ۱. ایجاد کانتکست
 const ThemeContext = createContext();
 
-// ۲. ایجاد پروایدر
-export const ThemeProvider = ({ children }) => {
-  // ۳. مدیریت وضعیت تم، با مقدار پیش‌فرض 'dark'
-  const [theme, setTheme] = useState('dark');
+const getInitialTheme = () => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const storedPrefs = window.localStorage.getItem('theme');
+    if (typeof storedPrefs === 'string') {
+      return storedPrefs;
+    }
 
-  // ۴. افکت برای اعمال تم به body
+    const userMedia = window.matchMedia('(prefers-color-scheme: dark)');
+    if (userMedia.matches) {
+      return 'dark';
+    }
+  }
+  // Default to dark as per your old file
+  return 'dark';
+};
+
+export const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState(getInitialTheme);
+
+  // Effect to apply the theme to the root element
   useEffect(() => {
-    document.body.setAttribute('data-theme', theme);
+    const root = window.document.documentElement;
+    root.classList.remove(theme === 'dark' ? 'light' : 'dark');
+    root.classList.add(theme);
+
+    // Save preference to localStorage
+    window.localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // ۵. تابع برای تغییر تم
   const toggleTheme = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
@@ -25,5 +42,4 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-// ۶. هوک (Hook) سفارشی برای استفاده آسان
 export const useTheme = () => useContext(ThemeContext);

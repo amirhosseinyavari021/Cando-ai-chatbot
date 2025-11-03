@@ -1,4 +1,4 @@
-import React from 'react'; // <--- FIX: این خط باعث حل مشکل کرش می‌شود
+import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import HomePage from './pages/HomePage';

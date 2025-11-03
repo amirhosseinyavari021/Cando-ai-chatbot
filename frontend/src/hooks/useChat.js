@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ask } from '../api';
-import axios from 'axios'; // Import axios for CancelToken source
+import { ask } from '../api/ai'; // Corrected import path
 
 /**
  * Custom hook to manage the entire chat state machine.
@@ -10,7 +9,9 @@ export const useChat = () => {
   // 'idle', 'loading', 'fallback', 'error'
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState(null);
-  const [cancelTokenSource, setCancelTokenSource] = useState(null);
+
+  // Use AbortController for cancellation
+  const abortControllerRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   // Scroll to bottom effect
@@ -20,10 +21,11 @@ export const useChat = () => {
 
   // Cleanup effect for unmounting
   useEffect(() => {
+    // Abort any ongoing request when the component unmounts
     return () => {
-      cancelTokenSource?.cancel('Component unmounted.');
+      abortControllerRef.current?.abort('Component unmounted.');
     };
-  }, [cancelTokenSource]);
+  }, []);
 
   /**
    * Appends a new message to the chat.
@@ -43,19 +45,28 @@ export const useChat = () => {
       return;
     }
 
+    // Cancel any previous in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort('New message sent.');
+    }
+
+    // Create a new AbortController for this request
+    abortControllerRef.current = new AbortController();
+
     // Add user's message
     addMessage({ sender: 'user', text: promptText });
-    
+
     setStatus('loading');
     setError(null);
 
-    // Create a new cancel token for this specific request
-    const source = axios.CancelToken.source();
-    setCancelTokenSource(source);
-
     try {
-      // Call the API
-      const data = await ask(promptText, source.token);
+      // Call the API with the signal
+      const data = await ask(
+        promptText,
+        null, // userId (not implemented in old hook)
+        null, // sessionId (not implemented in old hook)
+        abortControllerRef.current.signal
+      );
 
       // Check if fallback was triggered (for the UI)
       if (data.fallback) {
@@ -65,21 +76,25 @@ export const useChat = () => {
       // Add bot's response
       addMessage({ sender: 'bot', text: data.message });
       setStatus('idle');
-      
+
     } catch (err) {
-      if (err.message === 'Cancelled') {
-        // User cancelled the request
-        addMessage({ sender: 'bot', text: 'Generation stopped.', isError: true });
-        setStatus('idle'); // Go back to idle
+      // Check if the error is due to cancellation
+      if (err.name === 'CanceledError' || err.message === 'New message sent.' || err.message === 'User requested cancellation.') {
+        console.log('Request cancelled');
+        // If cancelled by a new message, stay loading
+        // If cancelled by user (stop), go to idle
+        if (err.message === 'User requested cancellation.') {
+          addMessage({ sender: 'bot', text: 'Generation stopped.', isError: true });
+          setStatus('idle');
+        }
       } else {
         // Handle API/network errors
-        setError(err.message); // Set the user-friendly error message
+        setError(err.message || 'An unknown error occurred.'); // Set the user-friendly error message
         setStatus('error'); // Set error state
-        // We don't add a bubble for the error, we'll show it in a separate div
       }
     } finally {
-      // Clear the cancel token source once request is complete
-      setCancelTokenSource(null);
+      // Clear the AbortController ref once request is complete or cancelled
+      abortControllerRef.current = null;
     }
   };
 
@@ -87,8 +102,8 @@ export const useChat = () => {
    * Triggers the cancellation of the in-flight request.
    */
   const handleStopGenerating = () => {
-    if (cancelTokenSource) {
-      cancelTokenSource.cancel('User requested cancellation.');
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort('User requested cancellation.');
     }
   };
 
