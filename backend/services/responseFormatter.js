@@ -1,20 +1,20 @@
-// backend/services/responseComposer.js
-// 🎯 (REWRITTEN)
-// هدف: تولید پاسخ نهایی طبیعی، خلاصه، و مکالمه‌ای برای کاربر
-// This is the "Naturalizer" layer.
+// backend/services/responseFormatter.js
+// 🎯 (REFACTORED)
+// هدف: اعمال الگوی لحن جدید "persianFriendly" و حذف کامل الگوهای قدیمی.
 
+/**
+ * A list of friendly, natural closings in Persian.
+ * (This is no longer used for the primary template, but can be kept for future use)
+ */
 const friendlyEndings = [
   'اگه سوال دیگه‌ای هم داشتی خوشحال میشم کمکت کنم 🌟',
   'امیدوارم کمکت کرده باشه! 😊',
-  'کاری داشتی بازم بپرس! 👋',
-  'خوشحال میشم بتونم بیشتر راهنماییت کنم.',
-  'روز خوبی داشته باشی! ✨',
+  'کاری داشti بازم بپرس! 👋',
 ];
 
 /**
- * Phrases to be removed from the AI's raw output.
+ * Phrases to be removed from the AI's raw output (to create the 'summary').
  * This includes technical jargon, meta-comments, and filler.
- * (Updated with MORE aggressive filters)
  */
 const technicalFilters = [
   // --- Basic Jargon ---
@@ -28,7 +28,7 @@ const technicalFilters = [
   /^نتیجه:/gi,
   /^خلاصه:/gi,
 
-  // --- ⭐️ NEW AGGRESSIVE FILTERS ⭐️ ---
+  // --- Aggressive Meta-Commentary Filters ---
   // "I didn't find in FAQ..."
   /[^.!?]* (FAQ|پرسش‌های متداول|سوالات متداول)[^.!?]*[.!?]?/gi,
   // "So based on data..."
@@ -37,26 +37,12 @@ const technicalFilters = [
   /^(سوال|پرسش) شما (به شکل کلی|درباره|در مورد) .* (است|می‌باشد)\.\s*/gi,
   // "So I'm going to..."
   /،? (پس|بنابراین) سراغ (اطلاعات|داده‌های) .* (می‌روم|می‌گردم|رفتم)(:|،|\.)/gi,
-  // "I searched for..."
+  // "I checked X..."
   /(اطلاعات|داده‌های) (دوره‌ها|اساتید) را (بررسی|جستجو) کردم/gi,
-  // "I didn't find in the database"
-  /(در|توی) (دیتابیس|پایگاه داده) (پیدا نکردم|نبود)/gi,
-];
 
-/**
- * A simple sentence splitter for summarization.
- */
-const getSentences = (text) => {
-  // Split by common sentence endings
-  return text.split(/([.!?؟]+)\s+/).reduce((acc, part, index, arr) => {
-    if (index % 2 === 0) {
-      // It's a sentence part
-      const nextPunctuation = arr[index + 1] || '';
-      acc.push(part + nextPunctuation);
-    }
-    return acc;
-  }, []);
-};
+  // --- ⛔️ As requested: Explicitly remove the old template ---
+  /سؤال شما رو بررسی کردم و خوشبختانه جوابش تو بخش FAQ موجوده/gi,
+];
 
 /**
  * (REPLACES composeFinalAnswer)
@@ -65,61 +51,44 @@ const getSentences = (text) => {
  * @returns {{text: string, confidence: number}}
  */
 export function composeFinalAnswer(draftAnswer = "") {
-  let text = (draftAnswer || "").trim();
+  let summary = (draftAnswer || "").trim();
 
-  // 1. 🧹 Run all filters to remove meta-commentary
+  // 1. 🧹 Run all filters to clean the AI's raw text into a summary
   technicalFilters.forEach((filter) => {
-    text = text.replace(filter, ' '); // Replace with space
+    summary = summary.replace(filter, ' '); // Replace with a space
   });
 
-  // 2. 🧹 Clean up whitespace and punctuation
-  text = text
+  // 2. 🔤 Clean up extra whitespace and punctuation
+  summary = summary
     .replace(/\n{2,}/g, '\n')   // Collapse multiple newlines
     .replace(/\s{2,}/g, ' ')    // Collapse multiple spaces
     .replace(/^(،|\.|:|\s)+/g, '') // Remove leading punctuation/space
+    .replace(/(،|\.|:|\s)+$/g, '') // Remove trailing punctuation/space
     .trim();
 
-  // 3. 💰 Handle "Price Awareness"
-  if (/قیمت/g.test(text) && /(ذکر نشده|موجود نیست|؟|نامشخص)/g.test(text)) {
-    text = text.replace(
-      /شهریه .* (؟|نامشخص|موجود نیست|ذکر نشده)/gi,
-      ''
-    );
-    // Add the polite response (if not already there)
-    if (!/مشاور/g.test(text)) {
-      text += '\n\n' + "در مورد قیمت دقیق اطلاعاتی در سیستم ثبت نشده، اما می‌تونم این مورد رو از مشاورین ثبت‌نام براتون بپرسم.";
-    }
+  // 3. 🛡️ Policy Check (forbidFixedFacts logic)
+  // Check if summary is empty (filters removed everything) OR
+  // if it's about "fixed facts" (price, address) and the data is missing.
+  const isAboutFixedFacts = /(شهریه|قیمت|آدرس|تلفن)/g.test(summary);
+  const isDataMissing =
+    summary.length < 5 || // Filters removed everything
+    /(؟|نامشخص|ذکر نشده|موجود نیست|اعلام نشده)/g.test(summary);
+
+  if (isAboutFixedFacts && isDataMissing) {
+    // Fulfill the "forbidFixedFacts" requirement
+    const policyMessage = 'برای موارد ثابت مثل شهریه یا آدرس باید از منبع رسمی اعلام بشه. اگه خواستی من می‌تونم راهنمایی کنم از کجا بپرسی.';
+    return {
+      text: policyMessage,
+      confidence: 0.95, // High confidence in policy message
+    };
   }
 
-  // 4. ✍️ Summarization step
-  const sentences = getSentences(text);
-  if (sentences.length > 5) {
-    text = sentences.slice(0, 5).join(' ').trim();
-    if (!/[.!?؟]$/.test(text)) text += '...';
-  }
-
-  // 5. ✨ Add friendly ending
-  if (text.length > 10 && text.length < 250) {
-    if (!/[.!؟👋🌟😊✨]/.test(text.slice(-5))) {
-      const ending = friendlyEndings[Math.floor(Math.random() * friendlyEndings.length)];
-      text += `\n\n${ending}`;
-    }
-  }
-
-  // 6. 🚫 Avoid repetition
-  text = text.replace(
-    /(اگر (دوست|تمایل) (داشتید|دارید|داشتی)).*(\1)/gi,
-    "$1"
-  );
-
-
-  // 7. 💔 Handle if filters removed everything
-  if (text.length < 5) {
-    text = 'متاسفانه الان اطلاعات دقیقی در این مورد ندارم، ولی می‌تونم برات بررسی کنم. چطور میتونم کمکت کنم؟ 😥';
-  }
+  // 4. 💬 Apply the new "persianFriendly" template
+  // Fulfill the "template(summary)" requirement
+  const finalText = `حله! الان سریع می‌گم: ${summary}. اگه موردی جا موند به من بگو.`;
 
   return {
-    text: text.trim(),
+    text: finalText.trim(),
     confidence: 0.9,
   };
 }

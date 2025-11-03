@@ -1,80 +1,63 @@
-// ================== Load Environment Variables (.env) ==================
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const express = require('express');
+const dotenv = require('dotenv');
+const cors = require('cors');
+const path = require('path');
+const connectDB = require('./config/db');
+const { errorHandler } = require('./middleware/errorHandler');
+const { setupLogger, httpLogger } = require('./middleware/logger');
 
-// Resolve current directory path
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Load env vars
+dotenv.config();
 
-// Force dotenv to load .env from backend folder explicitly
-const envPath = path.resolve(__dirname, '.env');
-dotenv.config({ path: envPath });
-
-// Debug logs (you can remove them later)
-console.log(`🧩 .env loaded from: ${envPath}`);
-console.log('🔑 OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ Loaded' : '❌ Missing');
-console.log('🧠 AI_PRIMARY_PROMPT_ID:', process.env.AI_PRIMARY_PROMPT_ID ? '✅ Loaded' : '❌ Missing');
-// ======================================================================
-
-import express from 'express';
-import cors from 'cors';
-import fs from 'fs';
-import connectDB from './config/db.js';
-import { requestDetailsLogger } from './middleware/logger.js';
-import { notFound, errorHandler } from './middleware/errorHandler.js';
-
-// --- Import New Routes ---
-import aiRoutes from './routes/ai.js';
-import courseRoutes from './routes/courses.js';
-// 🔸 instructors.js موقتاً غیرفعال شده تا ارور نده
-// import instructorRoutes from './routes/instructors.js';
-import faqRoutes from './routes/faq.js';
-// import adminRoutes from './routes/adminRoutes.js';
-// import logRoutes from './routes/logRoutes.js';
-
-// --- Connect to MongoDB ---
+// Connect to database
 connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 5001;
 
-app.use(cors());
+// Setup app-level logger
+setupLogger(app);
+app.use(httpLogger);
+
+// Body Parser Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(requestDetailsLogger); // Log all incoming requests
+app.use(express.urlencoded({ extended: false }));
 
-// --- Use API Routes ---
-app.use('/api/ai', aiRoutes);
-app.use('/api/courses', courseRoutes);
-// app.use('/api/instructors', instructorRoutes);
-app.use('/api/faq', faqRoutes);
+// CORS Middleware
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  })
+);
 
-// --- Base API route ---
-app.get('/api', (req, res) => {
-  res.json({ message: 'Cando AI Chatbot API is online.' });
-});
+// --- API Routes ---
+app.use('/api/ai', require('./routes/aiRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/logs', require('./routes/logRoutes'));
 
-// --- Serve Frontend (Production Mode) ---
+// --- NEW ROADMAP ROUTES ---
+app.use('/api/roadmap', require('./routes/roadmap'));
+
+// --- Serve Frontend ---
 if (process.env.NODE_ENV === 'production') {
-  const frontendDistPath = path.resolve(__dirname, '..', 'frontend', 'dist');
+  const buildPath = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(buildPath));
 
-  if (fs.existsSync(frontendDistPath)) {
-    app.use(express.static(frontendDistPath));
-
-    app.get('*', (req, res) => {
-      res.sendFile(path.resolve(frontendDistPath, 'index.html'));
-    });
-  } else {
-    console.warn(`⚠️  Production mode: 'frontend/dist' directory not found.`);
-    console.warn(`   Run 'npm run build' in the 'frontend' directory.`);
-  }
+  app.get('*', (req, res) =>
+    res.sendFile(path.resolve(buildPath, 'index.html'))
+  );
+} else {
+  app.get('/', (req, res) => {
+    res.send('Cando AI API is running...');
+  });
 }
 
-// --- Error Handlers ---
-app.use(notFound);
+// --- Error Handler ---
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () =>
+  console.log(
+    `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`
+  )
+);

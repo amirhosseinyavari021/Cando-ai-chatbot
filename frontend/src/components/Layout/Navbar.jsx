@@ -1,38 +1,38 @@
-import { useTranslation } from 'react-i18next';
+import React from 'react';
 import styles from './Navbar.module.css';
-import ThemeToggle from '../ThemeToggle/ThemeToggle'; // Ensure ThemeToggle is imported
-
-// Read version from Vite's environment variables
-const appVersion = import.meta.env.PACKAGE_VERSION;
+import { useTheme } from '../../context/ThemeContext';
+import ThemeToggle from '../ThemeToggle/ThemeToggle'; // Assuming this was here
 
 const Navbar = () => {
-  const { t, i18n } = useTranslation();
+  const { theme } = useTheme();
 
-  const toggleLanguage = () => {
-    const newLang = i18n.language === 'en' ? 'fa' : 'en';
-    i18n.changeLanguage(newLang);
-  };
+  // Any { t, i18n } = useTranslation(); and related logic has been REMOVED.
+  // The language toggle button/dropdown has been REMOVED.
 
   return (
-    <nav className={styles.navbar}>
-      <div className={`${styles.navContent} container`}>
-        <div className={styles.logoArea}>
-          {/* Ensure logo path is correct */}
-          <img src="/logo.png" alt="Cando Logo" className={styles.logo} />
-          {/* Container for title and version */}
-          <div className={styles.titleVersion}>
-            <h1>{t('navbar_title')}</h1>
-            {/* Display version if available */}
-            {appVersion && <span className={styles.version}>v{appVersion}</span>}
-          </div>
+    <nav
+      className={`${styles.navbar} bg-gray-100 dark:bg-gray-900 shadow-md`}
+    >
+      <div className={styles.navContainer}>
+        <div className={styles.logo}>
+          <img
+            src={
+              theme === 'dark' ? '/logo-dark.png' : '/logo-light.png'
+            } // Assuming you have different logos
+            alt="Cando Logo"
+            className={styles.logoImg}
+            onError={(e) => { e.target.src = '/logo.png' }} // Fallback logo
+          />
+          <span className={styles.logoText}>Cando AI</span>
         </div>
 
-        {/* Ensure this container and its children are present */}
-        <div className={styles.controlsArea}>
-          <ThemeToggle /> {/* Theme toggle button */}
-          <button onClick={toggleLanguage} className={styles.langToggle}>
-            {i18n.language === 'en' ? 'فارسی' : 'English'} {/* Language toggle button */}
-          </button>
+        <div className={styles.navLinks}>
+          {/* Other nav links would go here */}
+        </div>
+
+        <div className={styles.navControls}>
+          <ThemeToggle />
+          {/* The Language Toggle component is no longer here. */}
         </div>
       </div>
     </nav>
