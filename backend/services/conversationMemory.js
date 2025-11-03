@@ -1,67 +1,64 @@
-// backend/ai/services/conversationMemory.js
+import { v4 as uuidv4 } from 'uuid';
+
+// این یک حافظه موقت (in-memory) ساده است.
+// در محیط پروداکشن، این باید به دیتابیس یا Redis متصل شود.
+const conversationStore = new Map();
+
+const MAX_HISTORY_LENGTH = 50; // حداکثر تعداد پیام‌ها در تاریخچه
 
 /**
- * This is an in-memory cache for conversations.
- * It does not persist on server restart.
- *
- * Structure:
- * Map<userId, [
- * { role: 'user', content: '...', time: 12345 },
- * { role: 'assistant', content: '...', time: 12346 },
- * ]>
+ * یک پیام به تاریخچه مکالمه اضافه می‌کند.
+ * @param {string | null} conversationId - آی‌دی مکالمه
+ * @param {'user' | 'bot'} role - نقش فرستنده
+ * @param {string | object} content - محتوای پیام
+ * @returns {Promise<string>} - آی‌دی مکالمه (جدید یا موجود)
  */
-const memory = new Map();
-// Updated to 200 messages (100 user + 100 assistant = 100 exchanges)
-const MAX_HISTORY_LENGTH = 200;
+const addMessage = async (conversationId, role, content) => {
+  let id = conversationId || uuidv4();
 
-/**
- * (REPLACES getHistory)
- * دریافت تاریخچه مکالمه‌ی کاربر
- * @param {string} userId - The unique identifier for the user.
- * @param {number} [limit=6] - The number of recent turns to retrieve.
- * @returns {Array<object>} - An array of message objects.
- */
-export function getMemory(userId, limit = 6) {
-  const history = memory.get(userId) || [];
-  // Return the last 'limit' messages
-  return history.slice(-limit);
-}
-
-/**
- * (REPLACES appendTurn)
- * افزودن پیام جدید به حافظه مکالمه
- * @param {string} userId - The unique identifier for the user.
- * @param {object} turn - The message object { role, content }
- */
-export function updateMemory(userId, turn) {
-  if (!memory.has(userId)) {
-    memory.set(userId, []);
+  if (!conversationStore.has(id)) {
+    conversationStore.set(id, []);
   }
 
-  const history = memory.get(userId);
-  history.push({
-    role: turn.role,
-    content: turn.content,
-    time: Date.now(),
-  });
+  const history = conversationStore.get(id);
+  history.push({ role, content });
 
-  // Keep the history capped at the max length
+  // فقط ۱۰ پیام آخر را نگه می‌داریم
   if (history.length > MAX_HISTORY_LENGTH) {
-    history.shift(); // Remove the oldest message
+    conversationStore.set(id, history.slice(-MAX_HISTORY_LENGTH));
+  } else {
+    conversationStore.set(id, history);
   }
 
-  memory.set(userId, history);
-}
+  return id;
+};
 
 /**
- * (NEW)
- * پاک کردن حافظه مکالمه‌ی یک کاربر
- * @param {string} userId - The unique identifier for the user.
+ * تاریخچه یک مکالمه را برمی‌گرداند.
+ * @param {string} conversationId - آی‌دی مکالمه
+ * @returns {Promise<Array<object>>} - آرایه‌ای از پیام‌ها
  */
-export function clearMemory(userId) {
-  if (memory.has(userId)) {
-    memory.delete(userId);
-    return true;
+const getConversationHistory = async (conversationId) => {
+  if (!conversationId) {
+    return [];
   }
-  return false;
-}
+  return conversationStore.get(conversationId) || [];
+};
+
+/**
+ * تاریخچه یک مکالمه را پاک می‌کند.
+ * @param {string} conversationId - آی‌دی مکالمه
+ * @returns {Promise<void>}
+ */
+const clearHistory = async (conversationId) => {
+  if (conversationId) {
+    conversationStore.delete(conversationId);
+  }
+};
+
+// توابع را با سینتکس ES Module اکسپورت می‌کنیم
+export {
+  addMessage,
+  getConversationHistory,
+  clearHistory,
+};
