@@ -14,7 +14,7 @@ import Roadmap from '../models/Roadmap.js';
 
 /**
  * @desc    دریافت پاسخ AI یا داده ساختاریافته roadmap
- * @route   POST /api/ai/chat
+ * @route   POST /api/ai/chat (یا /api/ai/ask)
  * @access  Public
  */
 const getAIResponse = asyncHandler(async (req, res) => {
@@ -67,8 +67,7 @@ const getAIResponse = asyncHandler(async (req, res) => {
 
   // ۳. --- هدف Roadmap نبود ---
   // ارجاع به AI عمومی (aiRouter)
-  // FIX: aiRouter خودش تاریخچه را مدیریت می‌کند و لاگ می‌زند.
-  // دیگر نیازی به ارسال تاریخچه یا ذخیره لاگ در اینجا نیست.
+  // aiRouter خودش تاریخچه را مدیریت می‌کند و لاگ می‌زند.
 
   // FIX: فراخوانی تابع صحیح (routeRequest) و پاس دادن conversationId به عنوان userId
   const aiResult = await routeRequest(message, conversationId);
@@ -76,12 +75,11 @@ const getAIResponse = asyncHandler(async (req, res) => {
   // ۴. ضدعفونی کردن خروجی نهایی AI
   const sanitizedResponse = sanitizeOutput(aiResult.text);
 
-  // aiRouter خودش تاریخچه را آپدیت کرده است، پس ما اینجا کاری نمی‌کنیم.
-
   res.json({
     message: sanitizedResponse, // ارسال متن ضدعفونی شده
     conversationId: conversationId,
   });
 });
 
+// FIX: اکسپورت نام تابع صحیح که aiRoutes.js انتظار دارد
 export { getAIResponse };

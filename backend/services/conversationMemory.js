@@ -29,6 +29,10 @@ const updateMemory = async (conversationId, messageObject) => {
   }
 
   const history = conversationStore.get(id);
+  // اطمینان از اینکه نقش assistant به درستی ذخیره می‌شود (برای سازگاری با aiRouter)
+  if (messageObject.role === 'bot') {
+    messageObject.role = 'assistant';
+  }
   history.push(messageObject);
 
   // فقط ۲۰ پیام آخر را نگه می‌داریم
@@ -52,6 +56,7 @@ const clearHistory = async (conversationId) => {
   }
 };
 
+// FIX: اکسپورت صریح توابعی که aiRouter و aiController نیاز دارند
 export {
   getMemory,
   updateMemory,
