@@ -1,11 +1,9 @@
 import asyncHandler from 'express-async-handler';
-// FIX: ایمپورت تابع صحیح از aiRouter
 import { routeRequest } from '../services/aiRouter.js';
 import {
-  // FIX: استفاده از نام‌های توابع یکسان‌سازی شده
   getMemory,
   updateMemory,
-} from '../services/conversationMemory.js';
+} from '../services/conversationMemory.js'; // FIX: ایمپورت از فایل صحیح
 
 // ایمپورت‌های مربوط به NLU و Roadmap
 import { detectLanguage, inferRoleSlug } from '../utils/nlu.js';
@@ -36,7 +34,6 @@ const getAIResponse = asyncHandler(async (req, res) => {
         lang: lang,
       };
 
-      // FIX: استفاده از updateMemory
       await updateMemory(conversationId, { role: 'user', content: message });
       await updateMemory(conversationId, { role: 'bot', content: responsePayload });
 
@@ -54,7 +51,6 @@ const getAIResponse = asyncHandler(async (req, res) => {
 
       const sanitizedText = sanitizeOutput(text);
 
-      // FIX: استفاده از updateMemory
       await updateMemory(conversationId, { role: 'user', content: message });
       await updateMemory(conversationId, { role: 'bot', content: sanitizedText });
 
@@ -66,17 +62,13 @@ const getAIResponse = asyncHandler(async (req, res) => {
   }
 
   // ۳. --- هدف Roadmap نبود ---
-  // ارجاع به AI عمومی (aiRouter)
-  // aiRouter خودش تاریخچه را مدیریت می‌کند و لاگ می‌زند.
-
-  // FIX: فراخوانی تابع صحیح (routeRequest) و پاس دادن conversationId به عنوان userId
   const aiResult = await routeRequest(message, conversationId);
 
   // ۴. ضدعفونی کردن خروجی نهایی AI
   const sanitizedResponse = sanitizeOutput(aiResult.text);
 
   res.json({
-    message: sanitizedResponse, // ارسال متن ضدعفونی شده
+    message: sanitizedResponse,
     conversationId: conversationId,
   });
 });
