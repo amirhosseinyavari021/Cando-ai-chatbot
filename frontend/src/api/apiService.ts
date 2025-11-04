@@ -9,7 +9,7 @@ interface SendMessageParams {
 }
 
 export const streamChatResponse = async ({ text, sessionId, signal }: SendMessageParams): Promise<ReadableStream<Uint8Array>> => {
-  const res = await fetch(`${API_BASE_URL}/chat/stream`, {
+  const response = await fetch(`${API_BASE_URL}/chat/stream`, { 
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, sessionId }),
