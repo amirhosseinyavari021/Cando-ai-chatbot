@@ -1,50 +1,77 @@
 // backend/ai/adapters/openaiPrimary.js
+// This adapter handles the actual API call to OpenAI.
+
 import OpenAI from 'openai';
-import aiConfig from '../../config/ai.js';
+import config from '../../config/ai.js';
 import logger from '../../middleware/logger.js';
 
-const {
-  OPENAI_API_KEY,
-  OPENAI_API_URL = 'https://api.openai.com/v1',
-  AI_PRIMARY_PROMPT_ID,
-} = aiConfig;
-
-let openai;
-if (OPENAI_API_KEY) {
-  openai = new OpenAI({ apiKey: OPENAI_API_KEY, baseURL: OPENAI_API_URL });
-  logger.info('✅ OpenAI client initialized');
-} else {
-  logger.warn('⚠️ OPENAI_API_KEY missing');
+if (!config.OPENAI_API_KEY) {
+  logger.error('❌ Missing OPENAI_API_KEY in .env');
+  // We don't exit(1) here, as fallback might be enabled.
 }
 
+const openai = new OpenAI({
+  apiKey: config.OPENAI_API_KEY,
+  baseURL: config.OPENAI_API_URL,
+});
+
 /**
- * اگر dbContext === null باشد، یعنی باید inline تزریق شود
- * و متغیّرهای پرامپت شامل db_context ارسال نشود.
+ * Calls the primary OpenAI model with the new restricted prompt.
+ * @param {string} systemMessage - The main system prompt.
+ * @param {Array<object>} history - The conversation history.
+ * @param {string} userMessage - The latest user message.
+ * @param {string} dbContext - The RAG context from dbSearch.
+ * @returns {Promise<object>} The AI's response object.
  */
-export const callPrimary = async (userMessage, dbContext /* string | null */) => {
-  if (!openai || !AI_PRIMARY_PROMPT_ID) {
-    throw new Error('Primary AI (OpenAI) is not configured.');
+export const callPrimary = async (
+  systemMessage,
+  history,
+  userMessage,
+  dbContext
+) => {
+  const messages = [];
+
+  // 1. The System Prompt
+  messages.push({
+    role: 'system',
+    content: systemMessage,
+  });
+
+  // 2. The Dynamic Context
+  messages.push({
+    role: 'system',
+    content: `--- CONTEXT ---\n${dbContext}\n--- END CONTEXT ---`,
+  });
+
+  // 3. The History
+  if (history && history.length > 0) {
+    messages.push(...history);
   }
 
-  const variables = { user_message: userMessage };
-  const payload =
-    typeof dbContext === 'string' && dbContext.trim()
-      ? { prompt: { id: AI_PRIMARY_PROMPT_ID, version: '1', variables: { ...variables, db_context: dbContext } } }
-      : { prompt: { id: AI_PRIMARY_PROMPT_ID, version: '1', variables } };
+  // 4. The User's Message
+  messages.push({
+    role: 'user',
+    content: userMessage,
+  });
 
   try {
-    const response = await openai.responses.create(payload);
+    const completion = await openai.chat.completions.create({
+      model: config.AI_PRIMARY_MODEL,
+      messages: messages,
+      temperature: 0.3, // Lower temp for more factual, less creative answers
+      max_tokens: 250,
+    });
 
     const text =
-      response.output?.[0]?.content?.[0]?.text?.trim() ||
-      response.choices?.[0]?.message?.content?.trim() ||
-      response.text?.trim();
+      completion.choices[0]?.message?.content ||
+      'متاسفانه پاسخی دریافت نشد.';
 
-    if (!text) throw new Error('Empty response from primary AI');
-    logger.info('✅ Primary AI ok');
-    return { text, raw: response };
-  } catch (e) {
-    logger.error(`❌ Primary AI error: ${e.message}`);
-    throw new Error(`Primary AI Error: ${e.message}`);
+    return {
+      text: text,
+      fullResponse: completion,
+    };
+  } catch (error) {
+    logger.error(`❌ OpenAI Primary Error: ${error.message}`);
+    throw new Error(`OpenAI API Error: ${error.message}`);
   }
 };

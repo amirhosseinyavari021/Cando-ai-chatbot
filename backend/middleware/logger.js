@@ -1,73 +1,28 @@
-import winston from 'winston';
-import Log from '../models/Log.js'; // .js اضافه شد
+// A simple console logger stub to satisfy dependencies.
+// For production, replace with Winston or Pino.
 
-const { combine, timestamp, json, printf } = winston.format;
-
-// فرمت سفارشی برای لاگ‌های کنسول
-const consoleFormat = printf(({ level, message, timestamp, ...metadata }) => {
-  let msg = `${timestamp} ${level}: ${message}`;
-  if (Object.keys(metadata).length) {
-    msg += ` ${JSON.stringify(metadata)}`;
-  }
-  return msg;
-});
-
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: combine(timestamp(), json()),
-  transports: [
-    new winston.transports.File({
-      filename: 'logs/app.log',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
-    new winston.transports.Console({
-      format: combine(winston.format.colorize(), timestamp(), consoleFormat),
-    }),
-  ],
-  exceptionHandlers: [
-    new winston.transports.File({ filename: 'logs/exceptions.log' }),
-  ],
-});
-
-// تابعی برای تنظیم لاگر در app
-export const setupLogger = (app) => {
-  app.locals.logger = logger;
+const logger = {
+  info: (message) => {
+    console.log(`[INFO] ${message}`);
+  },
+  warn: (message) => {
+    console.warn(`[WARN] ${message}`);
+  },
+  error: (message) => {
+    console.error(`[ERROR] ${message}`);
+  },
+  debug: (message) => {
+    console.debug(`[DEBUG] ${message}`);
+  },
 };
 
-// تابعی برای ذخیره لاگ در دیتابیس
+/**
+ * Mock function for logging AI requests to the database.
+ */
 export const createLogEntry = async (logData) => {
-  try {
-    const log = new Log(logData);
-    await log.save();
-  } catch (error) {
-    // اگر ذخیره لاگ در دیتابیس شکست خورد، آن را در کنسول لاگ می‌کنیم
-    logger.error('Failed to save log to database:', {
-      error: error.message,
-      logData,
-    });
-  }
-};
-
-// میان‌افزار لاگ HTTP
-// FIX: این تابع اکسپورت می‌شود
-export const httpLogger = (req, res, next) => {
-  const start = Date.now();
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    logger.info(
-      `[HTTP] ${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`,
-      {
-        method: req.method,
-        url: req.originalUrl,
-        status: res.statusCode,
-        duration,
-        ip: req.ip,
-        userAgent: req.get('user-agent'),
-      }
-    );
-  });
-  next();
+  // In a real app, this would save to the 'logs' collection
+  // e.g., await Log.create(logData);
+  logger.info(`[LogEntry] Provider: ${logData.provider}, Status: ${logData.status}, Latency: ${logData.latency}ms`);
 };
 
 export default logger;

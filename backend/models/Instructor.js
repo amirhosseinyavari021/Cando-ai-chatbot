@@ -12,13 +12,11 @@ const instructorSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    collection: 'instructors',
+    collection: 'candosite_teachers', // <-- SPECIFIED COLLECTION
   }
 );
 
-// --- Indexes from Contract ---
-
-// 1. Text Index
+// --- Indexes ---
 instructorSchema.index({ name: 'text' }, { default_language: 'none' });
 
 const Instructor = mongoose.model('Instructor', instructorSchema);

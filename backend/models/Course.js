@@ -1,10 +1,5 @@
 import mongoose from 'mongoose';
 
-/**
- * UPDATED: This schema now includes new Persian fields for detailed
- * course information (price, registration, explanations) and
- * a new weighted text index for smarter RAG searching.
- */
 const courseSchema = new mongoose.Schema(
   {
     // --- Original Fields (kept for compatibility) ---
@@ -20,9 +15,9 @@ const courseSchema = new mongoose.Schema(
     'استاد': { type: String },
     'توضیح': { type: String }, // Detailed explanation
     'شهریه حضوری': { type: String },
-    'شهریه حضوری با تخفیف': { type: String },
+    'شهریه حضوری با تخTفیف': { type: String },
     'شهریه آنلاین': { type: String }, // Added for completeness
-    'شهریه آنلاین با تخفیف': { type: String },
+    'شهریه آنلاین با تخTفیف': { type: String },
     'لینک ثبت‌نام': { type: String },
     'نوع برگزاری': { type: String }, // e.g., 'حضوری', 'آنلاین', 'هردو'
 
@@ -41,32 +36,26 @@ const courseSchema = new mongoose.Schema(
   {
     timestamps: true,
     strict: false, // Allow other fields from DB
+    collection: 'candosite_courses', // <-- SPECIFIED COLLECTION
   }
 );
 
-// --- Indexes from Contract ---
-// 1. UPDATED Weighted Text Index
+// --- Indexes ---
 courseSchema.index(
   {
-    // New Persian fields with weights
     'دوره': 10,
     'استاد': 6,
     'توضیح': 5,
-    'شهریه حضوری': 4,
-    'شهریه آنلاین با تخفیف': 4,
-
-    // Original fields (lower weight)
     title: 3,
     instructor_name: 2,
     tags: 1,
   },
   {
     name: 'course_weighted_text_search_index',
-    default_language: 'none', // Use 'none' for multilingual/Persian fields
+    default_language: 'none',
   }
 );
 
-// 2. Scalar Indexes (Unchanged)
 courseSchema.index({ mode: 1, registration_status: 1 });
 
 const Course = mongoose.model('Course', courseSchema);

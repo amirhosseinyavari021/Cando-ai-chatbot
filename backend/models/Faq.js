@@ -12,19 +12,16 @@ const faqSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    collection: 'faq',
+    collection: 'candosite_faq', // <-- SPECIFIED COLLECTION
   }
 );
 
-// --- Indexes from Contract ---
-
-// 1. Text Index
+// --- Indexes ---
 faqSchema.index(
   { question: 'text', answer: 'text' },
   { default_language: 'none' }
 );
 
-// 2. Tags Index
 faqSchema.index({ tags: 1 });
 
 const Faq = mongoose.model('Faq', faqSchema);

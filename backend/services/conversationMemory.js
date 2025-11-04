@@ -1,58 +1,29 @@
-import { v4 as uuidv4 } from 'uuid';
+// A simple in-memory cache for conversation history (volatile).
+// Replace with Redis or MongoDB for persistent memory.
 
-const conversationStore = new Map();
-const MAX_HISTORY_LENGTH = 20;
+const memoryCache = new Map();
+const MAX_HISTORY = 10; // Keep last 10 messages (5 pairs)
 
 /**
- * تاریخچه یک مکالمه را برمی‌گرداند.
- * @param {string} conversationId - آی‌دی مکالمه
- * @returns {Promise<Array<object>>} - آرایه‌ای از پیام‌ها
+ * @param {string} conversationId
+ * @returns {Promise<Array<object>>}
  */
-// FIX: اکسپورت صحیح تابع
 export const getMemory = async (conversationId) => {
-  if (!conversationId) {
-    return [];
-  }
-  return conversationStore.get(conversationId) || [];
+  return memoryCache.get(conversationId) || [];
 };
 
 /**
- * یک پیام به تاریخچه مکالمه اضافه می‌کند.
- * @param {string} conversationId - آی‌دی مکالمه
- * @param {object} messageObject - { role: 'user' | 'bot' | 'assistant', content: string }
- * @returns {Promise<string>} - آی‌دی مکالمه
+ * @param {string} conversationId
+ * @param {object} message - { role: 'user' | 'bot', content: string }
  */
-// FIX: اکسپورت صحیح تابع
-export const updateMemory = async (conversationId, messageObject) => {
-  let id = conversationId || uuidv4();
+export const updateMemory = async (conversationId, message) => {
+  const history = memoryCache.get(conversationId) || [];
+  history.push(message);
 
-  if (!conversationStore.has(id)) {
-    conversationStore.set(id, []);
+  // Evict old messages
+  if (history.length > MAX_HISTORY) {
+    history.shift();
   }
 
-  const history = conversationStore.get(id);
-  if (messageObject.role === 'bot') {
-    messageObject.role = 'assistant';
-  }
-  history.push(messageObject);
-
-  if (history.length > MAX_HISTORY_LENGTH) {
-    conversationStore.set(id, history.slice(-MAX_HISTORY_LENGTH));
-  } else {
-    conversationStore.set(id, history);
-  }
-
-  return id;
-};
-
-/**
- * تاریخچه یک مکالمه را پاک می‌کند.
- * @param {string} conversationId - آی‌دی مکالمه
- * @returns {Promise<void>}
- */
-// FIX: اکسپورت صحیح تابع
-export const clearHistory = async (conversationId) => {
-  if (conversationId) {
-    conversationStore.delete(conversationId);
-  }
+  memoryCache.set(conversationId, history);
 };

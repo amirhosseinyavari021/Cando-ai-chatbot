@@ -1,144 +1,127 @@
 // backend/services/dbSearch.js
-import natural from 'natural';
-import Course from '../models/Course.js';
+// This service acts as the "dbRouter" requested, finding context
+// from the correct MongoDB collection based on user intent.
+
 import Faq from '../models/Faq.js';
-import logger from '../middleware/logger.js';
+import Course from '../models/Course.js';
+import Instructor from '../models/Instructor.js';
+import { FALLBACK_NO_DATA } from '../ai/promptTemplate.js';
 
-const tokenizer = new natural.WordTokenizer();
-const stemmer = natural.PorterStemmer; // Using Porter as a generic stemmer
-const MAX_CONTEXT_CHARS = 4000;
-
-/**
- * Scores documents based on token overlap with the query.
- * (Used for regex fallback)
- */
-const scoreDocs = (docs, textFields, queryTokens) => {
-  return docs
-    .map((doc) => {
-      const docText = textFields
-        .map((f) => doc[f] || '') // Handle missing fields
-        .join(' ');
-
-      if (!docText) return { ...doc, score: 0 };
-
-      const tokens = tokenizer
-        .tokenize(docText)
-        .map((t) => stemmer.stem(t));
-
-      const overlap = tokens.filter((t) => queryTokens.includes(t)).length;
-      const score = overlap / Math.max(tokens.length, 1);
-      return { ...doc, score };
-    })
-    .filter((d) => d.score > 0.1)
-    .sort((a, b) => b.score - a.score);
-};
+const MAX_CONTEXT_CHARS = 2000;
 
 /**
- * Creates a flexible regex from the user's query.
+ * Naive intent detection to decide which collection to search.
+ * @param {string} message - The user's message.
+ * @returns {'faq' | 'course' | 'instructor' | 'general'}
  */
-const createRegex = (query) => {
-  const words = query.split(/\s+/).filter((w) => w.length > 2);
-  if (words.length === 0) {
-    return new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+const detectIntent = (message) => {
+  const msg = message.toLowerCase();
+
+  // Prioritize FAQ (as per prompt rules)
+  if (
+    msg.includes('سوال') ||
+    msg.includes('چطور') ||
+    msg.includes('چگونه') ||
+    msg.includes('آیا') ||
+    msg.includes('payment') ||
+    msg.includes('پرداخت') ||
+    msg.includes('آدرس') ||
+    msg.includes('سیاست')
+  ) {
+    return 'faq';
   }
-  const regexPattern = words.join('|');
-  return new RegExp(regexPattern, 'i');
+
+  if (
+    msg.includes('course') ||
+    msg.includes('دوره') ||
+    msg.includes('کلاس') ||
+    msg.includes('شهریه') ||
+    msg.includes('ثبت‌نام') ||
+    msg.includes('price')
+  ) {
+    return 'course';
+  }
+
+  if (
+    msg.includes('instructor') ||
+    msg.includes('teacher') ||
+    msg.includes('استاد') ||
+    msg.includes('اساتید') ||
+    msg.includes('مدرس')
+  ) {
+    return 'instructor';
+  }
+
+  // Default to a general search
+  return 'general';
 };
 
 /**
- * Retrieves RAG context from DB.
- * - Uses weighted $text search.
- * - Uses regex fallback on new course fields.
- * - Prioritizes Course context over FAQ context.
+ * Truncates and formats search results into a string.
+ * @param {Array<object>} results - Documents from MongoDB.
+ * @param {string} title - The section title (e.g., "FAQs").
+ * @returns {string}
+ */
+const formatResults = (results, title) => {
+  if (!results || results.length === 0) return '';
+
+  let context = `\n--- ${title} ---\n`;
+  context += results
+    .map((doc) => JSON.stringify(doc.toObject ? doc.toObject() : doc))
+    .join('\n');
+  return context;
+};
+
+/**
+ * Gets context from MongoDB based on detected intent.
+ * @param {string} userMessage - The user's chat message.
+ * @returns {string} The formatted context string or a fallback message.
  */
 export const getContextFromDB = async (userMessage) => {
-  const queryTokens = tokenizer
-    .tokenize(userMessage)
-    .map((t) => stemmer.stem(t));
-
-  const textSearchQuery = { $text: { $search: userMessage } };
-  const scoreProjection = { score: { $meta: 'textScore' } };
-  const sort = { score: { $meta: 'textScore' } };
-
-  let courseContext = '';
-  let faqContext = '';
+  const intent = detectIntent(userMessage);
+  let results = [];
+  let context = '';
 
   try {
-    // --- Step 1: $text search (Primary) ---
-    let [courses, faqs] = await Promise.all([
-      Course.find(textSearchQuery, scoreProjection).sort(sort).limit(5).lean(),
-      Faq.find(textSearchQuery, scoreProjection).sort(sort).limit(3).lean(),
-    ]);
+    // Perform a $text search on the relevant collections
+    // We search all and format them to let the AI decide
 
-    // --- Step 2: Regex fallback (Secondary) ---
-    if (courses.length < 2) {
-      logger.info('RAG: $text search for courses weak, trying regex fallback...');
-      const regex = createRegex(userMessage);
-      const regexQuery = {
-        $or: [
-          { 'دوره': regex },
-          { 'استاد': regex },
-          { 'توضیح': regex },
-          { 'نوع برگزاری': regex },
-          { title: regex },
-          { instructor_name: regex },
-        ],
-      };
-      const regexCourses = await Course.find(regexQuery).limit(3).lean();
+    // 1. FAQ (Priority)
+    const faqs = await Faq.find(
+      { $text: { $search: userMessage } },
+      { score: { $meta: 'textScore' } }
+    ).sort({ score: { $meta: 'textScore' } }).limit(5);
+    context += formatResults(faqs, 'Potential FAQs');
 
-      const existingIds = new Set(courses.map(c => c._id.toString()));
-      const newCourses = regexCourses.filter(c => !existingIds.has(c._id.toString()));
+    // 2. Courses
+    const courses = await Course.find(
+      { $text: { $search: userMessage } },
+      { score: { $meta: 'textScore' } }
+    ).sort({ score: { $meta: 'textScore' } }).limit(3);
+    context += formatResults(courses, 'Matching Courses');
 
-      if (newCourses.length > 0) {
-        const scoredNewCourses = scoreDocs(
-          newCourses,
-          ['دوره', 'استاد', 'توضیح', 'title'],
-          queryTokens
-        );
-        courses = [...courses, ...scoredNewCourses]
-          .sort((a, b) => (b.score || 0) - (a.score || 0));
-      }
+    // 3. Instructors
+    const instructors = await Instructor.find(
+      { $text: { $search: userMessage } },
+      { score: { $meta: 'textScore' } }
+    ).sort({ score: { $meta: 'textScore' } }).limit(3);
+    context += formatResults(instructors, 'Matching Instructors');
+
+    // --- Check for results ---
+    if (context.trim() === '') {
+      // No results found in any collection
+      return FALLBACK_NO_DATA;
     }
 
-    // --- Step 3: Format Context (Courses First) ---
-    if (courses.length > 0) {
-      courseContext = courses
-        .slice(0, 3) // Take top 3 combined results
-        .map(c =>
-          [
-            `دوره: ${c['دوره'] || c.title}`,
-            `استاد: ${c['استاد'] || c.instructor_name || 'نامشخص'}`,
-            `توضیح: ${c['توضیح'] || 'موجود نیست'}`,
-            `شهریه آنلاین: ${c['شهریه آنلاین با تخفیف'] || c['شهریه آنلاین'] || '؟'}`,
-            `شهریه حضوری: ${c['شهریه حضوری با تخفیف'] || c['شهریه حضوری'] || '؟'}`,
-            `لینک ثبت‌نام: ${c['لینک ثبت‌نام'] || 'موجود نیست'}`,
-          ].join('\n')
-        )
-        .join('\n\n');
+    // Truncate to stay under token limit
+    if (context.length > MAX_CONTEXT_CHARS) {
+      context = context.substring(0, MAX_CONTEXT_CHARS) + '... [truncated]';
     }
 
-    if (faqs.length > 0) {
-      faqContext = faqs
-        .slice(0, 2) // Take top 2 FAQs as complementary
-        .map(f => `سوال: ${f.question}\nپاسخ: ${f.answer}`)
-        .join('\n\n');
-    }
+    return context;
 
-    // Combine, prioritizing courses
-    const fullContext = [courseContext, faqContext]
-      .filter(Boolean) // Remove empty strings
-      .join('\n\n--- (اطلاعات تکمیلی) ---\n\n');
-
-    if (fullContext.length > 0) {
-      logger.info(`RAG: Context prepared (${fullContext.length} chars). Snippet: ${fullContext.substring(0, 50)}...`);
-      return fullContext.substring(0, MAX_CONTEXT_CHARS);
-    } else {
-      logger.info('RAG: No context found.');
-      return ''; // Return empty string, aiRouter will handle it
-    }
-
-  } catch (err) {
-    logger.error(`❌ RAG Error: ${err.message}`);
-    return ''; // Return empty on error
+  } catch (error) {
+    console.error('❌ DB Search Error:', error.message);
+    return FALLBACK_NO_DATA; // Return fallback on DB error
   }
 };

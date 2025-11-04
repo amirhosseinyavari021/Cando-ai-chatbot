@@ -18,24 +18,27 @@ const config = {
   // --- Database ---
   MONGODB_URI: process.env.MONGODB_URI,
 
-  // --- OpenAI Primary ---
+  // --- AI Provider ---
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OPENAI_API_URL: process.env.OPENAI_API_URL || 'https://api.openai.com/v1',
-  AI_PRIMARY_MODEL: process.env.AI_PRIMARY_MODEL || 'gpt-4.1',
-  AI_PRIMARY_PROMPT_ID: process.env.AI_PRIMARY_PROMPT_ID,
+  AI_PRIMARY_MODEL: process.env.AI_PRIMARY_MODEL || 'gpt-4-turbo',
+  AI_PRIMARY_PROMPT_ID: process.env.AI_PRIMARY_PROMPT_ID, // Kept for old mode
 
-  // --- Fallback ---
+  // --- Fallback (For old mode) ---
   AI_FALLBACK_ENABLED: process.env.AI_FALLBACK_ENABLED === 'true',
   AI_LOCAL_MODEL_URL: process.env.AI_LOCAL_MODEL_URL,
   AI_LOCAL_MODEL_NAME: process.env.AI_LOCAL_MODEL_NAME,
 
   // --- Behavior ---
   AI_TIMEOUT_MS: parseInt(process.env.AI_TIMEOUT_MS || '15000', 10),
+
+  // --- (NEW) Restricted Mode ---
+  AI_RESTRICT_MODE: process.env.AI_RESTRICT_MODE === 'true',
 };
 
-// Debug log — فقط برای اطمینان
+// Debug log
 console.log('🧠 AI Config initialized:');
 console.log(`   🔑 OPENAI_API_KEY: ${config.OPENAI_API_KEY ? '✅' : '❌ Missing'}`);
-console.log(`   🧩 PROMPT_ID: ${config.AI_PRIMARY_PROMPT_ID ? '✅' : '❌ Missing'}`);
+console.log(`   🛡️  RESTRICT_MODE: ${config.AI_RESTRICT_MODE ? '✅' : '❌ (Running in old, unrestricted mode)'}`);
 
 export default config;
