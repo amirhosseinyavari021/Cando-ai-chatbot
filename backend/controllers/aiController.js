@@ -97,12 +97,20 @@ const getAIResponse = asyncHandler(async (req, res) => {
     ];
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: config.AI_PRIMARY_MODEL,
-        messages: messages,
-        temperature: 0.2, // Low temp for factual, non-creative answers
-        max_tokens: 250, // Keep responses concise
-      });
+      // --- (FIX) Add request options with timeout ---
+      const requestOptions = {
+        timeout: config.AI_TIMEOUT_MS || 15000, // Default to 15s
+      };
+
+      const completion = await openai.chat.completions.create(
+        {
+          model: config.AI_PRIMARY_MODEL,
+          messages: messages,
+          temperature: 0.2, // Low temp for factual, non-creative answers
+          max_tokens: 250, // Keep responses concise
+        },
+        requestOptions // --- (FIX) Pass options as the second argument ---
+      );
 
       const responseText =
         completion.choices[0]?.message?.content ||
