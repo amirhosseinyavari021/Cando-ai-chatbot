@@ -1,57 +1,78 @@
-import React from 'react';
+// frontend/src/pages/HomePage.jsx
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Layout } from '../components/Layout/Layout';
+import { Header } from '../components/Layout/Header';
+// FIX: Sidebar import removed
+// import Sidebar from '../components/Layout/Sidebar';
+import { ChatBox } from '../components/Chat/ChatBox';
 import { useChat } from '../hooks/useChat';
-import ChatWindow from '../components/Chat/ChatWindow';
-import ChatInput from '../components/Chat/ChatInput';
-import { AlertCircle } from 'lucide-react';
+import { detectLanguage } from '../lib/utils';
+import '../index.css';
 
 const HomePage = () => {
   const {
     messages,
-    status,
-    error,
-    sendMessage,
-    handleStopGenerating,
-    clearError,
-    messagesEndRef,
+    addMessage,
+    isLoading,
+    startNewChat,
+    // FIX: Removed persistence-related props
+    // currentConversationId,
+    // conversations,
+    // loadConversation,
+    // fetchConversations,
   } = useChat();
 
+  const { t, i18n } = useTranslation();
+
+  // FIX: Sidebar state removed
+  // const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // FIX: Removed useEffect for loading conversations
+  // useEffect(() => {
+  //   fetchConversations();
+  // }, [fetchConversations]);
+
+  // Change i18n language based on the first message
+  useEffect(() => {
+    if (messages.length > 0 && messages[0].sender === 'user') {
+      const lang = detectLanguage(messages[0].content);
+      if (i18n.language !== lang) {
+        i18n.changeLanguage(lang);
+      }
+    }
+  }, [messages, i18n]);
+
+  // FIX: handleConversationSelect removed
+  // const handleConversationSelect = (convoId) => {
+  //   loadConversation(convoId);
+  // };
+
   return (
-    // flex-1 ensures this component fills the 'main' tag from Layout.jsx
-    // overflow-hidden is critical for the child (ChatWindow) to scroll
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
-
-      {/* Chat Window (Scrolling Area) */}
-      <ChatWindow
-        messages={messages}
-        status={status}
-        messagesEndRef={messagesEndRef}
-        onSendSuggestion={sendMessage}
+    <Layout
+    // FIX: All sidebar props removed
+    // sidebar={
+    //   <Sidebar
+    //     conversations={conversations}
+    //     onNewChat={startNewChat}
+    //     onConversationSelect={handleConversationSelect}
+    //     activeConversationId={currentConversationId}
+    //   />
+    // }
+    // isSidebarOpen={isSidebarOpen}
+    // onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+    >
+      <Header
+        // FIX: onToggleSidebar prop removed
+        // onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        onNewChat={startNewChat}
       />
-
-      {/* Chat Input (Fixed Bottom Bar) */}
-      <div className="flex-shrink-0 p-3 md:p-6 border-t border-border bg-background">
-
-        {/* Error Display */}
-        {error && (
-          <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 p-3 rounded-md mb-3">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <p className="flex-1">{error}</p>
-            <button
-              onClick={clearError}
-              className="font-medium hover:underline"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        <ChatInput
-          onSend={sendMessage}
-          onStop={handleStopGenerating}
-          status={status}
-        />
-      </div>
-    </div>
+      <ChatBox
+        messages={messages}
+        onSendMessage={addMessage}
+        isLoading={isLoading}
+      />
+    </Layout>
   );
 };
 

@@ -1,42 +1,53 @@
+// frontend/src/components/Layout/Header.jsx
 import React from 'react';
-import { Menu, Plus } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
-import { Button } from '../ui/Button';
 import { useTranslation } from 'react-i18next';
+import { Menu, Plus } from 'lucide-react';
+import styles from './Navbar.module.css'; // Using Navbar styles for consistency
+import { Button } from '../ui/Button';
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
+import CandoLogo from '../../assets/cando-logo.svg';
 
-const Header = ({ onToggleSidebar }) => {
+/**
+ * Header component displayed at the top of the main chat window.
+ * (REWRITTEN: Removed sidebar toggle)
+ *
+ * @param {function} onNewChat - Function to start a new chat.
+ */
+export const Header = ({ onNewChat }) => {
+  // FIX: onToggleSidebar prop removed
   const { t } = useTranslation();
 
   return (
-    <header className="flex-shrink-0 flex items-center justify-between h-16 px-4 md:px-6 border-b border-border">
-      {/* Right Side (in RTL) */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="d-inline-flex md:hidden" // Only show on mobile
-          onClick={onToggleSidebar}
-          aria-label={t('toggleSidebar')}
-        >
-          <Menu className="w-5 h-5" />
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => window.location.reload()} // Simple "new chat"
-        >
-          <Plus className="w-4 h-4" />
-          {t('newChat')}
-        </Button>
+    <header className={styles.navbar}>
+      <div className={styles.left}>
+        {/* FIX: Sidebar Toggle Button Removed */}
+        {/*
+        <button className={styles.menuButton} onClick={onToggleSidebar}>
+          <Menu size={20} />
+        </button>
+        */}
+
+        {/* Cando Logo */}
+        {/* We add a specific style to 'fix' the margin left by the missing button */}
+        <img src={CandoLogo} alt="Cando Logo" className={`${styles.logo} ${styles.logoNoSidebar}`} />
       </div>
 
-      {/* Left Side (in RTL) */}
-      <div className="flex items-center gap-3">
+      <div className={styles.center}>
+        {/* Title or other center elements can go here */}
+        {/* <h1 className={styles.title}>{t('Cando AI Assistant')}</h1> */}
+      </div>
+
+      <div className={styles.right}>
+        {/* New Chat Button */}
+        <Button variant="ghost" size="icon" onClick={onNewChat} className={styles.newChatButton}
+          aria-label={t('New Chat')}
+        >
+          <Plus size={20} />
+        </Button>
+
+        {/* Theme Toggle */}
         <ThemeToggle />
-        {/* You can add User Avatar or other items here */}
       </div>
     </header>
   );
 };
-
-export default Header;

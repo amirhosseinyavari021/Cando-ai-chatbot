@@ -1,31 +1,43 @@
+// frontend/src/components/Layout/Layout.jsx
 import React, { useState } from 'react';
-import Sidebar from './Sidebar';
-import Header from './Header';
-import { cn } from '../../lib/utils';
+import styles from './Layout.module.css';
+import Attribution from './Attribution';
 
-const Layout = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+/**
+ * Main application layout component.
+ * (REWRITTEN: Removed sidebar logic)
+ * It creates the overall structure for the main content area.
+ * @param {React.ReactNode} children - The main content (e.g., Header + ChatBox).
+ */
+export const Layout = ({ children }) => {
+  // FIX: Removed all props and state related to sidebar
+  // ({ sidebar, children, isSidebarOpen, onToggleSidebar })
+  // const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // FIX: handleMobileToggle removed
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-      />
+    <div className={styles.layout}>
+      {/* --- Sidebar Removed --- */}
+      {/* <aside className={`${styles.sidebar} ${!isSidebarOpen ? styles.sidebarClosed : ''}`}>
+        {sidebar}
+      </aside>
+      */}
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Header */}
-        <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+      {/* --- Mobile Sidebar (Overlay) Removed --- */}
 
-        {/* Page Content (HomePage) */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+      {/* --- Main Content Area --- */}
+      <div className={styles.contentWrapper}>
+        {/* Note: The Header is part of the `children` prop, 
+          rendered from HomePage.jsx.
+        */}
+        <main className={styles.mainContent}>
           {children}
         </main>
+
+        {/* Attribution (Footer) */}
+        <Attribution />
       </div>
     </div>
   );
 };
-
-export default Layout;

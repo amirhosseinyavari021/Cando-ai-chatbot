@@ -1,7 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import { routeRequest } from '../services/aiRouter.js';
 import {
-  getMemory,
+  // getMemory, // <-- همچنان حذف است تا حافظه بلندمدت نداشته باشد
   updateMemory,
 } from '../services/conversationMemory.js'; // FIX: ایمپورت از فایل صحیح
 
@@ -34,6 +34,7 @@ const getAIResponse = asyncHandler(async (req, res) => {
         lang: lang,
       };
 
+      // FIX: ذخیره‌سازی برای آنالیز فعال شد
       await updateMemory(conversationId, { role: 'user', content: message });
       await updateMemory(conversationId, { role: 'bot', content: responsePayload });
 
@@ -51,6 +52,7 @@ const getAIResponse = asyncHandler(async (req, res) => {
 
       const sanitizedText = sanitizeOutput(text);
 
+      // FIX: ذخیره‌سازی برای آنالیز فعال شد
       await updateMemory(conversationId, { role: 'user', content: message });
       await updateMemory(conversationId, { role: 'bot', content: sanitizedText });
 
@@ -66,6 +68,10 @@ const getAIResponse = asyncHandler(async (req, res) => {
 
   // ۴. ضدعفونی کردن خروجی نهایی AI
   const sanitizedResponse = sanitizeOutput(aiResult.text);
+
+  // FIX: ذخیره‌سازی سوال کاربر و پاسخ نهایی ربات برای آنالیز
+  await updateMemory(conversationId, { role: 'user', content: message });
+  await updateMemory(conversationId, { role: 'bot', content: sanitizedResponse });
 
   res.json({
     message: sanitizedResponse,
