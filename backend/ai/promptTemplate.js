@@ -67,3 +67,10 @@ export const getDbFallback = (lang = 'fa') => {
   }
   return "الان اطلاعاتی در این مورد توی پایگاه داده من نیست، می‌تونم از پشتیبانی بپرسم براتون.";
 };
+
+/**
+ * (FIX) Dummy export to prevent startup crash from legacy dbSearch.js
+ * This is not used by the new AI_RESTRICT_MODE logic.
+ */
+export const FALLBACK_NO_DATA =
+  "الان اطلاعاتی در این مورد توی پایگاه داده من نیست.";
