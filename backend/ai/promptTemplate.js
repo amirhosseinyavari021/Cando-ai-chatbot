@@ -61,16 +61,29 @@ export const getRestrictedFallback = (lang = 'fa') => {
  * @param {string} lang - Detected language ('fa' or 'en').
  * @returns {string} The polite "not found" message.
  */
-export const getDbFallback = (lang = 'fa') => {
+export const getDbFallback = (lang = 'fa')_ => {
   if (lang === 'en') {
     return "I don't have information on that in my database right now, but I can ask our support team for you.";
   }
   return "الان اطلاعاتی در این مورد توی پایگاه داده من نیست، می‌تونم از پشتیبانی بپرسم براتون.";
 };
 
+// ===================================================================
+// --- (FIX) Dummy Exports for Legacy Code ---
+// These are required to prevent the server from crashing on startup
+// when loading old files (aiRouter.js, dbSearch.js).
+// They are NOT used by the new AI_RESTRICT_MODE logic.
+// ===================================================================
+
 /**
- * (FIX) Dummy export to prevent startup crash from legacy dbSearch.js
- * This is not used by the new AI_RESTRICT_MODE logic.
+ * (FIX) Dummy export for legacy dbSearch.js
  */
 export const FALLBACK_NO_DATA =
   "الان اطلاعاتی در این مورد توی پایگاه داده من نیست.";
+
+/**
+ * (FIX) Dummy export for legacy aiRouter.js
+ */
+export const getSystemPrompt = () => {
+  return "Legacy System Prompt (Not Used)";
+};
