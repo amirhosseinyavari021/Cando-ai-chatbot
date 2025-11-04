@@ -1,6 +1,7 @@
 // frontend/src/hooks/useChat.js
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+// FIX: This import will now work correctly because we fixed api/ai.js
 import { getAIResponse } from '../api/ai';
 
 /**
@@ -15,13 +16,7 @@ export const useChat = () => {
   const [error, setError] = useState(null);
 
   // FIX: Always create a new, fresh conversationId on mount.
-  // No more reading from localStorage.
   const [conversationId, setConversationId] = useState(uuidv4);
-
-  // FIX: All useEffects related to localStorage (for messages and convoId) are removed.
-  // FIX: All state and functions related to listing/loading old conversations
-  // (conversations, fetchConversations, loadConversation, updateConversationMetadata)
-  // are removed.
 
   // --- Chat Actions ---
 
@@ -35,8 +30,6 @@ export const useChat = () => {
     setMessages([]);
     setError(null);
   }, []);
-
-  // FIX: 'loadConversation' is removed as there is nothing to load.
 
   /**
    * Adds a new message and gets a response from the AI.
@@ -57,6 +50,7 @@ export const useChat = () => {
 
     try {
       // Send message to backend (backend will log this using updateMemory)
+      // FIX: This call now matches the corrected api/ai.js
       const response = await getAIResponse(content, conversationId);
 
       const botMessage = {
@@ -68,8 +62,6 @@ export const useChat = () => {
 
       // Update UI with bot's response
       setMessages(prevMessages => [...prevMessages, botMessage]);
-
-      // FIX: No more metadata update, backend handles logging.
 
     } catch (err) {
       console.error('Failed to get AI response:', err);
@@ -96,10 +88,5 @@ export const useChat = () => {
     isLoading,
     error,
     startNewChat,
-    // FIX: Removed persistence-related exports
-    // currentConversationId: conversationId,
-    // conversations,
-    // loadConversation,
-    // fetchConversations,
   };
 };
