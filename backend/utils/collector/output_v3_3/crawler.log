@@ -1,0 +1,10 @@
+[2025-11-04T20:29:05.920Z] ⚠️ Puppeteer failed for https://cando.ac/sitemap.xml → Runtime.callFunctionOn timed out. Increase the 'protocolTimeout' setting in launch/connect calls for a higher timeout if needed.; falling back to axios
+[2025-11-04T20:35:29.081Z] 🌐 Visiting: https://cando.ac/course/
+[2025-11-04T20:39:29.306Z] ⚠️ Puppeteer failed for https://cando.ac/course/ → Navigation timeout of 240000 ms exceeded; falling back to axios
+[2025-11-04T20:39:31.308Z] 🌐 Visiting: https://cando.ac/teachers/
+[2025-11-04T20:39:58.917Z] 🌐 Visiting: https://cando.ac/blog/
+[2025-11-04T20:40:23.011Z] 🌐 Visiting: https://cando.ac/news/
+[2025-11-04T20:40:50.537Z] 🌐 Visiting: https://cando.ac/faq/
+[2025-11-04T20:41:13.491Z] ✅ Synced 1 docs to candosite_courses
+[2025-11-04T20:41:13.499Z] ✅ Synced 1 docs to candosite_blog
+[2025-11-04T20:41:13.504Z] ✅ Synced 1 docs to candosite_news

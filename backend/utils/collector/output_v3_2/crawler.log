@@ -1,0 +1,145 @@
+[2025-11-04T19:42:13.398Z] ⚠️ Puppeteer failed for https://cando.ac/sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:42:23.252Z] ⚠️ Puppeteer failed for https://cando.ac/post-sitemap1.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:42:32.705Z] ⚠️ Puppeteer failed for https://cando.ac/post-sitemap2.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:42:39.336Z] ⚠️ Puppeteer failed for https://cando.ac/post-sitemap3.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:42:47.942Z] ⚠️ Puppeteer failed for https://cando.ac/page-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:42:56.985Z] ⚠️ Puppeteer failed for https://cando.ac/certification-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:00.678Z] ⚠️ Puppeteer failed for https://cando.ac/download-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:05.641Z] ⚠️ Puppeteer failed for https://cando.ac/news-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:10.032Z] ⚠️ Puppeteer failed for https://cando.ac/video-sitemap1.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:15.810Z] ⚠️ Puppeteer failed for https://cando.ac/video-sitemap2.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:23.413Z] ⚠️ Puppeteer failed for https://cando.ac/course-sitemap1.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:28.606Z] ⚠️ Puppeteer failed for https://cando.ac/course-sitemap2.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:33.005Z] ⚠️ Puppeteer failed for https://cando.ac/teacher-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:37.268Z] ⚠️ Puppeteer failed for https://cando.ac/category-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:41.380Z] ⚠️ Puppeteer failed for https://cando.ac/product_cat-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:44.613Z] ⚠️ Puppeteer failed for https://cando.ac/download-category-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:47.956Z] ⚠️ Puppeteer failed for https://cando.ac/video-category-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:51.712Z] ⚠️ Puppeteer failed for https://cando.ac/course_category-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:55.267Z] ⚠️ Puppeteer failed for https://cando.ac/teaching-area-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:43:59.014Z] ⚠️ Puppeteer failed for https://cando.ac/sitemap_index.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:07.326Z] ⚠️ Puppeteer failed for https://cando.ac/post-sitemap1.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:16.276Z] ⚠️ Puppeteer failed for https://cando.ac/post-sitemap2.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:22.409Z] ⚠️ Puppeteer failed for https://cando.ac/post-sitemap3.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:29.933Z] ⚠️ Puppeteer failed for https://cando.ac/page-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:36.021Z] ⚠️ Puppeteer failed for https://cando.ac/certification-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:39.763Z] ⚠️ Puppeteer failed for https://cando.ac/download-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:44.155Z] ⚠️ Puppeteer failed for https://cando.ac/news-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:50.437Z] ⚠️ Puppeteer failed for https://cando.ac/video-sitemap1.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:54.251Z] ⚠️ Puppeteer failed for https://cando.ac/video-sitemap2.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:44:57.747Z] ⚠️ Puppeteer failed for https://cando.ac/course-sitemap1.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:02.643Z] ⚠️ Puppeteer failed for https://cando.ac/course-sitemap2.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:07.637Z] ⚠️ Puppeteer failed for https://cando.ac/teacher-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:14.256Z] ⚠️ Puppeteer failed for https://cando.ac/category-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:18.274Z] ⚠️ Puppeteer failed for https://cando.ac/product_cat-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:22.382Z] ⚠️ Puppeteer failed for https://cando.ac/download-category-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:27.093Z] ⚠️ Puppeteer failed for https://cando.ac/video-category-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:31.483Z] ⚠️ Puppeteer failed for https://cando.ac/course_category-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:36.714Z] ⚠️ Puppeteer failed for https://cando.ac/teaching-area-sitemap.xml → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:42.693Z] ⚠️ Puppeteer failed for https://cando.ac/sitemap_index.xml.gz → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:45:45.282Z] 🌐 Visiting: https://cando.ac/course/
+[2025-11-04T19:45:58.024Z] ⚠️ Puppeteer failed for https://cando.ac/course/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:46:00.035Z] 🌐 Visiting: https://cando.ac/teachers/
+[2025-11-04T19:46:04.537Z] ⚠️ Puppeteer failed for https://cando.ac/teachers/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:46:09.080Z] 🌐 Visiting: https://cando.ac/blog/
+[2025-11-04T19:46:12.673Z] ⚠️ Puppeteer failed for https://cando.ac/blog/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:46:17.251Z] 🌐 Visiting: https://cando.ac/news/
+[2025-11-04T19:46:20.568Z] ⚠️ Puppeteer failed for https://cando.ac/news/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:46:24.917Z] 🌐 Visiting: https://cando.ac/faq/
+[2025-11-04T19:46:28.236Z] ⚠️ Puppeteer failed for https://cando.ac/faq/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:46:32.491Z] 🌐 Visiting: https://cando.ac/about/
+[2025-11-04T19:46:36.903Z] ⚠️ Puppeteer failed for https://cando.ac/about/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:46:38.711Z] 🌐 Visiting: https://cando.ac/contact/
+[2025-11-04T19:46:44.097Z] ⚠️ Puppeteer failed for https://cando.ac/contact/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:46:47.237Z] 🌐 Visiting: https://cando.ac/blog/%d9%86%d9%82%d8%b7%db%80-%d8%b4%d8%b1%d9%88%d8%b9-%d8%a8%d8%b1%d8%a7%db%8c-%d8%a7%d9%85%d9%86%d8%b3%d8%a7%d8%b2%db%8c-%d8%b4%d8%a8%da%a9%d9%87-%db%8c%da%a9-%d8%b3%d8%a7%d8%b2%d9%85%d8%a7/
+[2025-11-04T19:46:51.402Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%86%d9%82%d8%b7%db%80-%d8%b4%d8%b1%d9%88%d8%b9-%d8%a8%d8%b1%d8%a7%db%8c-%d8%a7%d9%85%d9%86%d8%b3%d8%a7%d8%b2%db%8c-%d8%b4%d8%a8%da%a9%d9%87-%db%8c%da%a9-%d8%b3%d8%a7%d8%b2%d9%85%d8%a7/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:46:56.056Z] 🌐 Visiting: https://cando.ac/blog/%da%86%d8%b1%d8%a7-%d9%84%db%8c%d9%86%d9%88%da%a9%d8%b3-%d8%a8%d8%b1%d8%a7%db%8c-%d8%a7%d9%85%d9%86%db%8c%d8%aa-%da%a9%d8%a7%d8%b1%d9%87%d8%a7-%d9%85%d8%ad%d8%a8%d9%88%d8%a8-%d8%a7%d8%b3%d8%aa%d8%9f/
+[2025-11-04T19:46:59.926Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%da%86%d8%b1%d8%a7-%d9%84%db%8c%d9%86%d9%88%da%a9%d8%b3-%d8%a8%d8%b1%d8%a7%db%8c-%d8%a7%d9%85%d9%86%db%8c%d8%aa-%da%a9%d8%a7%d8%b1%d9%87%d8%a7-%d9%85%d8%ad%d8%a8%d9%88%d8%a8-%d8%a7%d8%b3%d8%aa%d8%9f/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:47:04.348Z] 🌐 Visiting: https://cando.ac/blog/%db%b1%db%b6-%d8%a7%d8%a8%d8%b2%d8%a7%d8%b1-%d8%b7%d8%b1%d8%a7%d8%ad%db%8c-ui-ux-%d8%af%d8%b1-%d8%b3%d8%a7%d9%84-%db%b1%db%b4%db%b0%db%b4/
+[2025-11-04T19:47:08.174Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%db%b1%db%b6-%d8%a7%d8%a8%d8%b2%d8%a7%d8%b1-%d8%b7%d8%b1%d8%a7%d8%ad%db%8c-ui-ux-%d8%af%d8%b1-%d8%b3%d8%a7%d9%84-%db%b1%db%b4%db%b0%db%b4/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:47:13.460Z] 🌐 Visiting: https://cando.ac/blog/%d8%a2%db%8c%d8%a7-%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87-%d9%86%d9%88%db%8c%d8%b3%db%8c-%d8%a8%d8%b1%d8%a7%db%8c-%d8%ae%d8%a7%d9%86%d9%85%d9%87%d8%a7-%d9%85%d9%86%d8%a7%d8%b3%d8%a8-%d8%a7/
+[2025-11-04T19:47:17.400Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%a2%db%8c%d8%a7-%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87-%d9%86%d9%88%db%8c%d8%b3%db%8c-%d8%a8%d8%b1%d8%a7%db%8c-%d8%ae%d8%a7%d9%86%d9%85%d9%87%d8%a7-%d9%85%d9%86%d8%a7%d8%b3%d8%a8-%d8%a7/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:47:22.265Z] 🌐 Visiting: https://cando.ac/blog/%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87-%d9%86%d9%88%db%8c%d8%b3%db%8c-%d8%b1%d8%a8%d8%a7%d8%aa%db%8c%da%a9-%da%86%db%8c%d8%b3%d8%aa%d8%9f-%d9%87%d9%85%d9%87-%da%86%db%8c%d8%b2-%d8%af%d8%b1%d8%a8%d8%a7/
+[2025-11-04T19:47:25.700Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87-%d9%86%d9%88%db%8c%d8%b3%db%8c-%d8%b1%d8%a8%d8%a7%d8%aa%db%8c%da%a9-%da%86%db%8c%d8%b3%d8%aa%d8%9f-%d9%87%d9%85%d9%87-%da%86%db%8c%d8%b2-%d8%af%d8%b1%d8%a8%d8%a7/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:47:30.350Z] 🌐 Visiting: https://cando.ac/blog/%d9%85%d8%b9%d8%b1%d9%81%db%8c-%d8%a8%d9%87%d8%aa%d8%b1%db%8c%d9%86-%d9%82%d8%a7%d9%84%d8%a8%d9%87%d8%a7%db%8c-%d9%88%d8%b1%d8%af%d9%be%d8%b1%d8%b3/
+[2025-11-04T19:47:33.740Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%85%d8%b9%d8%b1%d9%81%db%8c-%d8%a8%d9%87%d8%aa%d8%b1%db%8c%d9%86-%d9%82%d8%a7%d9%84%d8%a8%d9%87%d8%a7%db%8c-%d9%88%d8%b1%d8%af%d9%be%d8%b1%d8%b3/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:47:37.907Z] 🌐 Visiting: https://cando.ac/blog/%d9%85%d8%b9%d8%b1%d9%81%db%8c-data-center-virtualization-%d8%af%d8%b1-%d8%a8%d8%b3%d8%aa%d8%b1-%d9%85%d8%ac%d8%a7%d8%b2%db%8c-%d8%b3%d8%a7%d8%b2%db%8c/
+[2025-11-04T19:47:41.795Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%85%d8%b9%d8%b1%d9%81%db%8c-data-center-virtualization-%d8%af%d8%b1-%d8%a8%d8%b3%d8%aa%d8%b1-%d9%85%d8%ac%d8%a7%d8%b2%db%8c-%d8%b3%d8%a7%d8%b2%db%8c/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:47:46.348Z] 🌐 Visiting: https://cando.ac/blog/%d8%ac%d9%84%d9%88%da%af%db%8c%d8%b1%db%8c-%d8%a7%d8%b2-%d8%ad%d9%84%d9%82%d9%87%d9%87%d8%a7%db%8c-%d9%85%d8%b3%db%8c%d8%b1%db%8c%d8%a7%d8%a8%db%8c-%d8%a8%d8%a7-route-poisoning-%d8%af%d8%b1-o/
+[2025-11-04T19:47:49.853Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%ac%d9%84%d9%88%da%af%db%8c%d8%b1%db%8c-%d8%a7%d8%b2-%d8%ad%d9%84%d9%82%d9%87%d9%87%d8%a7%db%8c-%d9%85%d8%b3%db%8c%d8%b1%db%8c%d8%a7%d8%a8%db%8c-%d8%a8%d8%a7-route-poisoning-%d8%af%d8%b1-o/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:47:54.361Z] 🌐 Visiting: https://cando.ac/blog/%da%86%da%af%d9%88%d9%86%d9%87-https-%d8%b1%d8%a7-%d9%81%d8%b9%d8%a7%d9%84-%da%a9%d9%86%db%8c%d9%85%d8%9f-%d8%b1%d8%a7%d9%87%d9%86%d9%85%d8%a7%db%8c-%da%a9%d8%a7%d8%b1%d8%a8%d8%b1%d8%af%db%8c-%d9%88/
+[2025-11-04T19:47:57.504Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%da%86%da%af%d9%88%d9%86%d9%87-https-%d8%b1%d8%a7-%d9%81%d8%b9%d8%a7%d9%84-%da%a9%d9%86%db%8c%d9%85%d8%9f-%d8%b1%d8%a7%d9%87%d9%86%d9%85%d8%a7%db%8c-%da%a9%d8%a7%d8%b1%d8%a8%d8%b1%d8%af%db%8c-%d9%88/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:48:01.844Z] 🌐 Visiting: https://cando.ac/blog/%d9%87%d9%88%db%8c%d8%aa-%d8%a8%d8%b5%d8%b1%db%8c-%da%86%db%8c%d8%b3%d8%aa%d8%9f-%da%86%d8%b1%d8%a7-%d8%a8%d9%87-%d9%87%d9%88%db%8c%d8%aa-%d8%a8%d8%b5%d8%b1%db%8c-%d9%86%db%8c%d8%a7%d8%b2-%d8%af%d8%a7/
+[2025-11-04T19:48:05.420Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%87%d9%88%db%8c%d8%aa-%d8%a8%d8%b5%d8%b1%db%8c-%da%86%db%8c%d8%b3%d8%aa%d8%9f-%da%86%d8%b1%d8%a7-%d8%a8%d9%87-%d9%87%d9%88%db%8c%d8%aa-%d8%a8%d8%b5%d8%b1%db%8c-%d9%86%db%8c%d8%a7%d8%b2-%d8%af%d8%a7/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:48:10.222Z] 🌐 Visiting: https://cando.ac/blog/%d8%a2%d8%b4%d9%86%d8%a7%db%8c%db%8c-%d8%a8%d8%a7-%d8%aa%d9%81%d8%a7%d9%88%d8%aa%d9%87%d8%a7%db%8c-%d8%aa%d9%88%d8%b3%d8%b9%d9%87%d8%af%d9%87%d9%86%d8%af%d9%87-%d9%81%d9%88%d9%84/
+[2025-11-04T19:48:13.824Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%a2%d8%b4%d9%86%d8%a7%db%8c%db%8c-%d8%a8%d8%a7-%d8%aa%d9%81%d8%a7%d9%88%d8%aa%d9%87%d8%a7%db%8c-%d8%aa%d9%88%d8%b3%d8%b9%d9%87%d8%af%d9%87%d9%86%d8%af%d9%87-%d9%81%d9%88%d9%84/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:48:18.148Z] 🌐 Visiting: https://cando.ac/blog/%d9%85%d8%b9%d8%b1%d9%81%db%8c-%d9%85%d9%86%d8%a7%d8%a8%d8%b9-%d8%a2%d9%85%d9%88%d8%b2%d8%b4%db%8c-icdl/
+[2025-11-04T19:48:21.736Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%85%d8%b9%d8%b1%d9%81%db%8c-%d9%85%d9%86%d8%a7%d8%a8%d8%b9-%d8%a2%d9%85%d9%88%d8%b2%d8%b4%db%8c-icdl/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:48:26.359Z] 🌐 Visiting: https://cando.ac/blog/%d8%a7%d8%b3%d8%aa%d9%81%d8%a7%d8%af%d9%87-%d8%a7%d8%b2-context-%d8%af%d8%b1-%d8%b1%db%8c-%d8%a7%da%a9%d8%aa/
+[2025-11-04T19:48:29.899Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%a7%d8%b3%d8%aa%d9%81%d8%a7%d8%af%d9%87-%d8%a7%d8%b2-context-%d8%af%d8%b1-%d8%b1%db%8c-%d8%a7%da%a9%d8%aa/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:48:34.542Z] 🌐 Visiting: https://cando.ac/blog/serverless_architecture/
+[2025-11-04T19:48:38.190Z] ⚠️ Puppeteer failed for https://cando.ac/blog/serverless_architecture/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:48:42.648Z] 🌐 Visiting: https://cando.ac/blog/%d8%aa%d9%81%d8%a7%d9%88%d8%aa-php-%d9%88-javascript%d8%8c-%da%a9%d8%af%d8%a7%d9%85-%db%8c%da%a9-%d8%a7%d9%86%d8%aa%d8%ae%d8%a7%d8%a8-%d8%a8%d9%87%d8%aa%d8%b1%db%8c-%d8%a7%d8%b3%d8%aa%d8%9f/
+[2025-11-04T19:48:46.295Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%aa%d9%81%d8%a7%d9%88%d8%aa-php-%d9%88-javascript%d8%8c-%da%a9%d8%af%d8%a7%d9%85-%db%8c%da%a9-%d8%a7%d9%86%d8%aa%d8%ae%d8%a7%d8%a8-%d8%a8%d9%87%d8%aa%d8%b1%db%8c-%d8%a7%d8%b3%d8%aa%d8%9f/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:48:50.892Z] 🌐 Visiting: https://cando.ac/blog/%d9%85%d8%af%db%8c%d8%b1%db%8c%d8%aa-%da%86%d8%b1%d8%ae%d9%87-%d8%b9%d9%85%d8%b1-%d9%86%d8%b1%d9%85%d8%a7%d9%81%d8%b2%d8%a7%d8%b1-%d8%a8%d8%a7-%d8%a7%d8%b3%d8%aa%d9%81%d8%a7%d8%af%d9%87/
+[2025-11-04T19:48:55.348Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%85%d8%af%db%8c%d8%b1%db%8c%d8%aa-%da%86%d8%b1%d8%ae%d9%87-%d8%b9%d9%85%d8%b1-%d9%86%d8%b1%d9%85%d8%a7%d9%81%d8%b2%d8%a7%d8%b1-%d8%a8%d8%a7-%d8%a7%d8%b3%d8%aa%d9%81%d8%a7%d8%af%d9%87/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:49:00.182Z] 🌐 Visiting: https://cando.ac/blog/%d8%aa%d9%81%d8%a7%d9%88%d8%aa-iaas-%d9%88-paas-%d9%88-saas-%da%86%db%8c%d8%b3%d8%aa-%d9%88-%da%a9%d8%af%d8%a7%d9%85-%d9%85%d9%86%d8%a7%d8%b3%d8%a8-%d8%a7%d8%b3%d8%aa%d8%9f/
+[2025-11-04T19:49:03.939Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%aa%d9%81%d8%a7%d9%88%d8%aa-iaas-%d9%88-paas-%d9%88-saas-%da%86%db%8c%d8%b3%d8%aa-%d9%88-%da%a9%d8%af%d8%a7%d9%85-%d9%85%d9%86%d8%a7%d8%b3%d8%a8-%d8%a7%d8%b3%d8%aa%d8%9f/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:49:08.495Z] 🌐 Visiting: https://cando.ac/blog/%d8%a7%d8%b2-%d8%b3%db%8c%d8%b1-%d8%aa%d8%a7-%d9%be%db%8c%d8%a7%d8%b2-%d8%b3%d8%a6%d9%88-%d8%af%d8%a7%d8%ae%d9%84%db%8c-%da%86%da%a9-%d9%84%db%8c%d8%b3%d8%aa-%d8%ad%d8%b1%d9%81%d9%87%d8%a7/
+[2025-11-04T19:49:12.134Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%a7%d8%b2-%d8%b3%db%8c%d8%b1-%d8%aa%d8%a7-%d9%be%db%8c%d8%a7%d8%b2-%d8%b3%d8%a6%d9%88-%d8%af%d8%a7%d8%ae%d9%84%db%8c-%da%86%da%a9-%d9%84%db%8c%d8%b3%d8%aa-%d8%ad%d8%b1%d9%81%d9%87%d8%a7/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:49:16.727Z] 🌐 Visiting: https://cando.ac/blog/%d8%b3%d8%a6%d9%88-%d8%ae%d8%a7%d8%b1%d8%ac%db%8c-%da%86%db%8c%d8%b3%d8%aa-%d9%88-%da%86%da%af%d9%88%d9%86%d9%87-%da%a9%d8%a7%d8%b1-%d9%85%db%8c%da%a9%d9%86%d8%af%d8%9f/
+[2025-11-04T19:49:20.265Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%b3%d8%a6%d9%88-%d8%ae%d8%a7%d8%b1%d8%ac%db%8c-%da%86%db%8c%d8%b3%d8%aa-%d9%88-%da%86%da%af%d9%88%d9%86%d9%87-%da%a9%d8%a7%d8%b1-%d9%85%db%8c%da%a9%d9%86%d8%af%d8%9f/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:49:24.986Z] 🌐 Visiting: https://cando.ac/blog/ccna-training/
+[2025-11-04T19:49:28.435Z] ⚠️ Puppeteer failed for https://cando.ac/blog/ccna-training/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:49:32.729Z] 🌐 Visiting: https://cando.ac/blog/%d8%a8%d8%b1%d8%aa%d8%b1%db%8c%d9%86-%d9%88-%d9%85%d9%88%d9%81%d9%82-%d8%aa%d8%b1%db%8c%d9%86-%d8%b2%d9%86%d8%a7%d9%86-%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87-%d9%86%d9%88%db%8c%d8%b3-%d8%af%d8%b1-%d8%af/
+[2025-11-04T19:49:35.998Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%a8%d8%b1%d8%aa%d8%b1%db%8c%d9%86-%d9%88-%d9%85%d9%88%d9%81%d9%82-%d8%aa%d8%b1%db%8c%d9%86-%d8%b2%d9%86%d8%a7%d9%86-%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87-%d9%86%d9%88%db%8c%d8%b3-%d8%af%d8%b1-%d8%af/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:49:40.655Z] 🌐 Visiting: https://cando.ac/blog/%d8%aa%d8%a3%d8%ab%db%8c%d8%b1-%d9%87%d9%88%d8%b4-%d9%85%d8%b5%d9%86%d9%88%d8%b9%db%8c-%d8%a8%d8%b1-%d8%b7%d8%b1%d8%a7%d8%ad%db%8c-%d8%b3%d8%a7%db%8c%d8%aa-%d9%88-%d8%aa%d9%88%d8%b3%d8%b9%d9%87/
+[2025-11-04T19:49:44.613Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%aa%d8%a3%d8%ab%db%8c%d8%b1-%d9%87%d9%88%d8%b4-%d9%85%d8%b5%d9%86%d9%88%d8%b9%db%8c-%d8%a8%d8%b1-%d8%b7%d8%b1%d8%a7%d8%ad%db%8c-%d8%b3%d8%a7%db%8c%d8%aa-%d9%88-%d8%aa%d9%88%d8%b3%d8%b9%d9%87/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:49:48.859Z] 🌐 Visiting: https://cando.ac/blog/%da%86%da%af%d9%88%d9%86%d9%87-%d8%b3%d8%b1%d8%b9%d8%aa-%d8%b3%d8%a7%db%8c%d8%aa-%d9%88%d8%b1%d8%af%d9%be%d8%b1%d8%b3%db%8c-%d8%b1%d8%a7-%d8%a7%d9%81%d8%b2%d8%a7%db%8c%d8%b4-%d8%af%d9%87%db%8c%d9%85/
+[2025-11-04T19:49:52.404Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%da%86%da%af%d9%88%d9%86%d9%87-%d8%b3%d8%b1%d8%b9%d8%aa-%d8%b3%d8%a7%db%8c%d8%aa-%d9%88%d8%b1%d8%af%d9%be%d8%b1%d8%b3%db%8c-%d8%b1%d8%a7-%d8%a7%d9%81%d8%b2%d8%a7%db%8c%d8%b4-%d8%af%d9%87%db%8c%d9%85/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:49:57.251Z] 🌐 Visiting: https://cando.ac/blog/%d9%86%d8%ad%d9%88%d9%87-%d8%a7%d9%86%d8%aa%d8%ae%d8%a7%d8%a8-%d8%b1%d9%85%d8%b2-%d8%b9%d8%a8%d9%88%d8%b1-%d9%82%d9%88%db%8c-%d9%88-%d9%85%d9%86%d8%a7%d8%b3%d8%a8-%da%86%db%8c%d8%b3%d8%aa%d8%9f/
+[2025-11-04T19:50:01.834Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%86%d8%ad%d9%88%d9%87-%d8%a7%d9%86%d8%aa%d8%ae%d8%a7%d8%a8-%d8%b1%d9%85%d8%b2-%d8%b9%d8%a8%d9%88%d8%b1-%d9%82%d9%88%db%8c-%d9%88-%d9%85%d9%86%d8%a7%d8%b3%d8%a8-%da%86%db%8c%d8%b3%d8%aa%d8%9f/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:50:08.369Z] 🌐 Visiting: https://cando.ac/blog/hotspot-configuration-mikrotik/
+[2025-11-04T19:50:13.826Z] ⚠️ Puppeteer failed for https://cando.ac/blog/hotspot-configuration-mikrotik/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:50:20.185Z] 🌐 Visiting: https://cando.ac/blog/multi_language_site/
+[2025-11-04T19:50:25.351Z] ⚠️ Puppeteer failed for https://cando.ac/blog/multi_language_site/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:50:31.057Z] 🌐 Visiting: https://cando.ac/blog/content_management_systems/
+[2025-11-04T19:50:35.282Z] ⚠️ Puppeteer failed for https://cando.ac/blog/content_management_systems/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:50:40.748Z] 🌐 Visiting: https://cando.ac/blog/improving-web-performance-with-webassembly/
+[2025-11-04T19:50:44.469Z] ⚠️ Puppeteer failed for https://cando.ac/blog/improving-web-performance-with-webassembly/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:50:48.990Z] 🌐 Visiting: https://cando.ac/blog/%d9%85%d8%b1%d9%88%d8%b1%da%af%d8%b1%d9%87%d8%a7-%da%86%da%af%d9%88%d9%86%d9%87-%da%a9%d8%af%d9%87%d8%a7%db%8c-html-%d9%88-css-%d8%b1%d8%a7-%d8%b1%d9%86%d8%af%d8%b1-%d9%85%db%8c%da%a9%d9%86/
+[2025-11-04T19:50:52.880Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%85%d8%b1%d9%88%d8%b1%da%af%d8%b1%d9%87%d8%a7-%da%86%da%af%d9%88%d9%86%d9%87-%da%a9%d8%af%d9%87%d8%a7%db%8c-html-%d9%88-css-%d8%b1%d8%a7-%d8%b1%d9%86%d8%af%d8%b1-%d9%85%db%8c%da%a9%d9%86/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:50:58.588Z] 🌐 Visiting: https://cando.ac/blog/%d8%a8%d8%b1%d8%b1%d8%b3%db%8c-%d8%a7%d8%b5%d9%88%d9%84-%d8%a7%d9%85%d9%86%db%8c%d8%aa%db%8c-%d8%af%d8%b1-%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87%d9%86%d9%88%db%8c%d8%b3%db%8c-%d9%88%d8%a8/
+[2025-11-04T19:51:01.929Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%a8%d8%b1%d8%b1%d8%b3%db%8c-%d8%a7%d8%b5%d9%88%d9%84-%d8%a7%d9%85%d9%86%db%8c%d8%aa%db%8c-%d8%af%d8%b1-%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87%d9%86%d9%88%db%8c%d8%b3%db%8c-%d9%88%d8%a8/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:51:06.023Z] 🌐 Visiting: https://cando.ac/blog/%d9%85%d9%82%d8%a7%db%8c%d8%b3%d9%87-graphql-%d9%88-rest-api-%da%a9%d8%af%d8%a7%d9%85-%d8%b1%d9%88%db%8c%da%a9%d8%b1%d8%af-%d8%a8%d8%b1%d8%a7%db%8c-%d9%be%d8%b1%d9%88%da%98%d9%87%d9%87%d8%a7/
+[2025-11-04T19:51:09.339Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%85%d9%82%d8%a7%db%8c%d8%b3%d9%87-graphql-%d9%88-rest-api-%da%a9%d8%af%d8%a7%d9%85-%d8%b1%d9%88%db%8c%da%a9%d8%b1%d8%af-%d8%a8%d8%b1%d8%a7%db%8c-%d9%be%d8%b1%d9%88%da%98%d9%87%d9%87%d8%a7/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:51:13.861Z] 🌐 Visiting: https://cando.ac/blog/%d8%aa%d9%81%d8%a7%d9%88%d8%aa-react-js-%d9%88-react-native-%d8%a7%d9%86%d8%aa%d8%ae%d8%a7%d8%a8-%d8%a8%d9%87%d8%aa%d8%b1%db%8c%d9%86-%d9%81%d8%b1%db%8c%d9%85%d9%88%d8%b1%da%a9/
+[2025-11-04T19:51:17.628Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%aa%d9%81%d8%a7%d9%88%d8%aa-react-js-%d9%88-react-native-%d8%a7%d9%86%d8%aa%d8%ae%d8%a7%d8%a8-%d8%a8%d9%87%d8%aa%d8%b1%db%8c%d9%86-%d9%81%d8%b1%db%8c%d9%85%d9%88%d8%b1%da%a9/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:51:22.049Z] 🌐 Visiting: https://cando.ac/blog/%da%86%d8%a7%d9%84%d8%b4%d9%87%d8%a7%db%8c-%d8%a7%d9%88%d9%84%db%8c%d9%86-%d9%be%d8%b1%d9%88%da%98%d9%87-%d8%b7%d8%b1%d8%a7%d8%ad%db%8c-%d9%88%d8%a8-%d8%aa%d8%ac%d8%b1%d8%a8%db%8c%d8%a7/
+[2025-11-04T19:51:26.074Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%da%86%d8%a7%d9%84%d8%b4%d9%87%d8%a7%db%8c-%d8%a7%d9%88%d9%84%db%8c%d9%86-%d9%be%d8%b1%d9%88%da%98%d9%87-%d8%b7%d8%b1%d8%a7%d8%ad%db%8c-%d9%88%d8%a8-%d8%aa%d8%ac%d8%b1%d8%a8%db%8c%d8%a7/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:51:30.742Z] 🌐 Visiting: https://cando.ac/blog/%d8%a2%d8%b4%d9%86%d8%a7%db%8c%db%8c-%d8%a8%d8%a7-%d8%a8%d9%87%d8%aa%d8%b1%db%8c%d9%86-%d9%81%d8%b1%db%8c%d9%85-%d9%88%d8%b1%da%a9-%d9%87%d8%a7%db%8c-php-%d8%aa%d8%a7-%d8%b3%d8%a7%d9%84-2025/
+[2025-11-04T19:51:34.565Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%a2%d8%b4%d9%86%d8%a7%db%8c%db%8c-%d8%a8%d8%a7-%d8%a8%d9%87%d8%aa%d8%b1%db%8c%d9%86-%d9%81%d8%b1%db%8c%d9%85-%d9%88%d8%b1%da%a9-%d9%87%d8%a7%db%8c-php-%d8%aa%d8%a7-%d8%b3%d8%a7%d9%84-2025/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:51:38.957Z] 🌐 Visiting: https://cando.ac/blog/%d8%a2%d9%85%d9%88%d8%b2%d8%b4-%da%af%d8%a7%d9%85-%d8%a8%d9%87-%da%af%d8%a7%d9%85-%d8%b1%d8%a7%d9%87-%d8%a7%d9%86%d8%af%d8%a7%d8%b2%db%8c-%da%af%d9%88%da%af%d9%84-%d8%b3%d8%b1%da%86-%da%a9%d9%86%d8%b3/
+[2025-11-04T19:51:42.706Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d8%a2%d9%85%d9%88%d8%b2%d8%b4-%da%af%d8%a7%d9%85-%d8%a8%d9%87-%da%af%d8%a7%d9%85-%d8%b1%d8%a7%d9%87-%d8%a7%d9%86%d8%af%d8%a7%d8%b2%db%8c-%da%af%d9%88%da%af%d9%84-%d8%b3%d8%b1%da%86-%da%a9%d9%86%d8%b3/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:51:47.190Z] 🌐 Visiting: https://cando.ac/blog/icdl-2/
+[2025-11-04T19:51:50.497Z] ⚠️ Puppeteer failed for https://cando.ac/blog/icdl-2/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:51:54.942Z] 🌐 Visiting: https://cando.ac/blog/data_privacy/
+[2025-11-04T19:51:58.458Z] ⚠️ Puppeteer failed for https://cando.ac/blog/data_privacy/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:52:02.925Z] 🌐 Visiting: https://cando.ac/blog/%d9%88%d8%b1%d8%af%d9%be%d8%b1%d8%b3-%da%86%db%8c%d8%b3%d8%aa-%d9%88-%da%86%d9%87-%da%a9%d8%a7%d8%b1%d8%a8%d8%b1%d8%af%db%8c-%d8%af%d8%a7%d8%b1%d8%af%d8%9f-%d8%a8%d8%b1%d8%b1%d8%b3%db%8c-%d8%ac%d8%a7/
+[2025-11-04T19:52:06.771Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%88%d8%b1%d8%af%d9%be%d8%b1%d8%b3-%da%86%db%8c%d8%b3%d8%aa-%d9%88-%da%86%d9%87-%da%a9%d8%a7%d8%b1%d8%a8%d8%b1%d8%af%db%8c-%d8%af%d8%a7%d8%b1%d8%af%d8%9f-%d8%a8%d8%b1%d8%b1%d8%b3%db%8c-%d8%ac%d8%a7/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:52:11.351Z] 🌐 Visiting: https://cando.ac/blog/%d9%85%d8%b2%d8%a7%db%8c%d8%a7-%d9%88-%d9%85%d8%b9%d8%a7%db%8c%d8%a8-%d8%a7%d8%b3%d8%aa%d9%81%d8%a7%d8%af%d9%87-%d8%a7%d8%b2-api%d9%87%d8%a7-%d8%af%d8%b1-%d8%aa%d9%88%d8%b3%d8%b9%d9%87-%d9%88/
+[2025-11-04T19:52:14.819Z] ⚠️ Puppeteer failed for https://cando.ac/blog/%d9%85%d8%b2%d8%a7%db%8c%d8%a7-%d9%88-%d9%85%d8%b9%d8%a7%db%8c%d8%a8-%d8%a7%d8%b3%d8%aa%d9%81%d8%a7%d8%af%d9%87-%d8%a7%d8%b2-api%d9%87%d8%a7-%d8%af%d8%b1-%d8%aa%d9%88%d8%b3%d8%b9%d9%87-%d9%88/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:52:19.326Z] 🌐 Visiting: https://cando.ac/blog/10-%d8%a7%d8%b4%d8%aa%d8%a8%d8%a7%d9%87-%d8%b1%d8%a7%db%8c%d8%ac-%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87%d9%86%d9%88%db%8c%d8%b3%d8%a7%d9%86-%d9%85%d8%aa%d9%88%d8%b3%d8%b7-%da%a9%d9%87-%d8%a8/
+[2025-11-04T19:52:22.918Z] ⚠️ Puppeteer failed for https://cando.ac/blog/10-%d8%a7%d8%b4%d8%aa%d8%a8%d8%a7%d9%87-%d8%b1%d8%a7%db%8c%d8%ac-%d8%a8%d8%b1%d9%86%d8%a7%d9%85%d9%87%d9%86%d9%88%db%8c%d8%b3%d8%a7%d9%86-%d9%85%d8%aa%d9%88%d8%b3%d8%b7-%da%a9%d9%87-%d8%a8/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:52:27.481Z] 🌐 Visiting: https://cando.ac/blog/flexbox-grid/
+[2025-11-04T19:52:30.814Z] ⚠️ Puppeteer failed for https://cando.ac/blog/flexbox-grid/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:52:35.830Z] 🌐 Visiting: https://cando.ac/blog/siem/
+[2025-11-04T19:52:39.496Z] ⚠️ Puppeteer failed for https://cando.ac/blog/siem/ → page.waitForTimeout is not a function; falling back to axios
+[2025-11-04T19:56:45.469Z] 🌐 Visiting: https://cando.ac/course/
+[2025-11-04T19:57:00.666Z] 🌐 Visiting: https://cando.ac/teachers/
+[2025-11-04T19:57:08.565Z] 🌐 Visiting: https://cando.ac/blog/
+[2025-11-04T19:57:16.410Z] 🌐 Visiting: https://cando.ac/news/
+[2025-11-04T19:57:23.071Z] 🌐 Visiting: https://cando.ac/faq/
+[2025-11-04T19:57:29.661Z] 🌐 Visiting: https://cando.ac/about/
+[2025-11-04T19:57:38.184Z] 🌐 Visiting: https://cando.ac/contact/
+[2025-11-04T19:57:46.653Z] ✅ Synced 1 docs to candosite_blog
