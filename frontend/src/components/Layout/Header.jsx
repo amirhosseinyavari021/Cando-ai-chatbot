@@ -5,7 +5,11 @@ import { Menu, Plus } from 'lucide-react';
 import styles from './Navbar.module.css'; // Using Navbar styles for consistency
 import { Button } from '../ui/Button';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
-import CandoLogo from '../../assets/cando-logo.svg';
+// FIX: Import path removed, as the file doesn't exist at that path
+// import CandoLogo from '../../assets/cando-logo.svg'; 
+
+// FIX: Use the correct logo path from the /public folder
+const CandoLogo = '/logo.png';
 
 /**
  * Header component displayed at the top of the main chat window.
