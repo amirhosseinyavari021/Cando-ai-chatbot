@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { Layout } from '../components/Layout/Layout';
 import { Header } from '../components/Layout/Header';
 // import Sidebar from '../components/Layout/Sidebar'; // <-- حذف شده بود
-import { ChatBox } from '../components/Chat/ChatBox';
+// FIX: ایمپورت از حالت { ChatBox } به ChatBox تغییر کرد تا با export default مطابقت داشته باشد
+import ChatBox from '../components/Chat/ChatBox';
 import { useChat } from '../hooks/useChat';
-// FIX: 'detectLanguage' حذف شد چون در utils.js شما وجود ندارد
+// FIX: 'detectLanguage' حذف شده بود
 // import { detectLanguage } from '../lib/utils';
 import '../index.css';
 
@@ -20,14 +21,9 @@ const HomePage = () => {
 
   const { t, i18n } = useTranslation();
 
-  // FIX: این useEffect به طور کامل حذف شد تا خطای بیلد برطرف شود
+  // FIX: useEffect مربوط به detectLanguage حذف شده بود
   // useEffect(() => {
-  //   if (messages.length > 0 && messages[0].sender === 'user') {
-  //     const lang = detectLanguage(messages[0].content);
-  //     if (i18n.language !== lang) {
-  //       i18n.changeLanguage(lang);
-  //     }
-  //   }
+  //   ...
   // }, [messages, i18n]);
 
   return (
@@ -38,9 +34,10 @@ const HomePage = () => {
         // پراپ onToggleSidebar حذف شده است
         onNewChat={startNewChat}
       />
+      {/* FIX: کامپوننت ChatBox اکنون به درستی رندر می‌شود */}
       <ChatBox
         messages={messages}
-        onSendMessage={addMessage}
+        onSendMessage={addMessage} // FIX: پراپ onSendMessage پاس داده شد
         isLoading={isLoading}
       />
     </Layout>
