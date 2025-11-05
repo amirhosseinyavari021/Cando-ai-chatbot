@@ -1,58 +1,102 @@
 // ============================================
-// 🧠 Cando Chatbot Backend (Refactored)
+// 🧠 Cando Chatbot Backend (Final Stable Build)
 // ============================================
 
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 
-import express from 'express';
-import cors from 'cors';
-import morgan from 'morgan';
-import asyncHandler from 'express-async-handler'; // <-- (NEW) Import a-sync handler
-import connectDB from './config/db.js';
-import aiRoutes from './routes/aiRoutes.js';
-import { getAIResponse } from './controllers/aiController.js'; // <-- (NEW) Import controller
-import { notFound, errorHandler } from './middleware/errorHandler.js';
-import logger from './middleware/logger.js';
+import express from "express";
+import cors from "cors";
+import morgan from "morgan";
+import path from "path";
+import { fileURLToPath } from "url";
+import chatRouter from "./routes/chatRouter.js"; // ✅ new unified chat route
+import logger from "./middleware/logger.js";
 
-// --- Connect to Database ---
-connectDB();
+// ============================================
+// ⚙️ Setup
+// ============================================
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// --- Core Middleware ---
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-// Use 'morgan' for logging HTTP requests, integrating with our logger
+// ============================================
+// 🧩 Core Middleware
+// ============================================
+app.use(cors({ origin: "*", methods: ["GET", "POST"], allowedHeaders: ["Content-Type"] }));
+app.use(express.json({ limit: "10mb" }));
+
+// Request logging
 app.use(
-  morgan('dev', {
+  morgan("dev", {
     stream: {
-      write: (message) => logger.info(message.trim()),
+      write: (msg) => logger.info(msg.trim()),
     },
   })
 );
 
 // ============================================
-// 📍 API Routes
+// 🗄️ MongoDB Connection
+// ============================================
+import { MongoClient } from "mongodb";
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  console.error("❌ MONGODB_URI not found in environment");
+  process.exit(1);
+}
+const client = new MongoClient(uri);
+(async () => {
+  try {
+    await client.connect();
+    console.log("✅ MongoDB connected successfully");
+  } catch (err) {
+    console.error("❌ MongoDB connection failed:", err);
+    process.exit(1);
+  }
+})();
+
+// ============================================
+// 📍 Routes
 // ============================================
 
-// --- AI Chat Routes ---
-// All AI-related traffic (e.g., /api/ai/chat) is handled here.
-app.use('/api/ai', aiRoutes);
+// Health check
+app.get("/api/health", (_req, res) => res.json({ ok: true, message: "Cando Chatbot backend is healthy ✅" }));
 
-// --- (NEW FIX) Catch old frontend endpoint ---
-// The frontend is still calling /api/chat/stream, which we removed.
-// This adds it back and points it directly to the new getAIResponse controller.
-app.post('/api/chat/stream', asyncHandler(getAIResponse));
-app.post('/api/ai/ask', asyncHandler(getAIResponse)); // Also ensure legacy /ask works
+// Main chatbot API
+app.use("/api", chatRouter);
+
+// Legacy route support (for old frontend versions)
+app.post("/api/chat/stream", async (req, res, next) => {
+  try {
+    req.url = "/chat/stream";
+    next();
+  } catch (err) {
+    res.status(500).json({ ok: false, error: "Internal route error" });
+  }
+}, chatRouter);
 
 // ============================================
-// ❌ Error Handling
+// ❌ 404 & Error Handlers
 // ============================================
-app.use(notFound);
-app.use(errorHandler);
+app.use((req, res) => {
+  res.status(404).json({
+    ok: false,
+    message: "مسیر درخواستی یافت نشد.",
+  });
+});
 
+app.use((err, _req, res, _next) => {
+  console.error("❌ Server Error:", err);
+  res.status(500).json({
+    ok: false,
+    message: "خطایی در سرور رخ داده است.",
+  });
+});
+
+// ============================================
+// 🚀 Start Server
 // ============================================
 app.listen(PORT, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
