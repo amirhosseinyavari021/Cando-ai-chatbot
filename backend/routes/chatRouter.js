@@ -3,7 +3,6 @@ import { handleChat } from "../services/aiService.js";
 
 const router = Router();
 
-// POST /api/chat/stream
 router.post("/chat/stream", async (req, res) => {
   try {
     const userMessage = (req.body?.message || "").toString().trim();

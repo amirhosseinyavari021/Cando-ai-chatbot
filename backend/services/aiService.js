@@ -2,6 +2,14 @@ import OpenAI from "openai";
 import { MongoClient } from "mongodb";
 import { searchAcademy } from "./dbSearch.js";
 
+// --- ENV checks (شفاف)
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ OPENAI_API_KEY is missing in ENV");
+}
+if (!process.env.MONGODB_URI) {
+  console.error("❌ MONGODB_URI is missing in ENV");
+}
+
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   baseURL: process.env.OPENAI_API_URL || "https://api.openai.com/v1",
@@ -31,14 +39,12 @@ async function queryDB(q) {
 // --- Restrict: فقط کندو
 function isOffTopic(text) {
   if (!RESTRICT) return false;
-  // آزاد گذاشتن سلام و پرسش‌های عمومی در مورد کندو
-  const normalized = text.replace(/\s+/g, " ").toLowerCase();
-  const allowKeywords = [
-    "کندو", "دوره", "اساتید", "شهریه", "ثبت نام", "زمان برگزاری", "تقویم",
-    "ui", "ux", "ccna", "devops", "لینوکس", "میکروتیک", "سیسکو", "fortinet", "دواپس"
-  ];
-  const isAcademyIntent = allowKeywords.some(k => normalized.includes(k));
-  return !isAcademyIntent && !/سلام|hi|hello|درود|خسته نباشید/.test(normalized);
+  const normalized = (text || "").replace(/\s+/g, " ").toLowerCase();
+  // اجازه‌ی احوال‌پرسی + کلمات مرتبط با کندو
+  if (/^(سلام|hi|hello|درود|خسته نباشید)\b/.test(normalized)) return false;
+  const allow = ["کندو", "دوره", "اساتید", "شهریه", "ثبت نام", "زمان", "تقویم", "ui", "ux", "ccna", "devops", "لینوکس", "سیسکو", "fortinet", "میکروتیک", "دواپس", "کلاس", "آنلاین", "حضوری"];
+  const intended = allow.some(k => normalized.includes(k));
+  return !intended;
 }
 
 const SYSTEM_MSG = `
@@ -52,15 +58,12 @@ You are Cando AI Assistant — academic advisor for Cando Academy.
 `;
 
 export async function handleChat(userMessage) {
-  // 1) Restrict off-topic
   if (isOffTopic(userMessage)) {
     return "من فقط درباره‌ی دوره‌ها، اساتید و اطلاعات آموزشگاه کندو می‌تونم کمک کنم 🙂";
   }
 
-  // 2) Try DB first
-  const dbContext = await queryDB(userMessage); // { faqs:[], courses:[], teachers:[] } | null
+  const dbContext = await queryDB(userMessage); // { faqs, courses, teachers } | null
 
-  // 3) Build prompt
   const userContent = [
     dbContext ? `📚 Database context (summarized):
 - FAQs: ${dbContext.faqs?.slice(0, 3).map(f => f.question).join(" | ") || "—"}
@@ -69,7 +72,6 @@ export async function handleChat(userMessage) {
     `👤 User: ${userMessage}`
   ].filter(Boolean).join("\n\n");
 
-  // 4) Call OpenAI (with timeout)
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
@@ -85,15 +87,13 @@ export async function handleChat(userMessage) {
     }, { signal: controller.signal });
 
     clearTimeout(id);
-
     const text = resp?.choices?.[0]?.message?.content?.trim();
     return text || "متوجه نشدم؛ لطفاً دقیق‌تر بفرمایید درباره کدام دوره/استاد می‌پرسید.";
   } catch (err) {
     clearTimeout(id);
     console.error("❌ AI error:", err?.message || err);
-    // اگر AI خطا داد، حداقل یک پاسخ دیتابیسی ساده بدهیم:
     if (dbContext && (dbContext.faqs?.length || dbContext.courses?.length || dbContext.teachers?.length)) {
-      return "در حال حاضر به سرویس هوش مصنوعی دسترسی ندارم. اما می‌تونم بگم: " +
+      return "فعلاً به سرویس هوش مصنوعی دسترسی ندارم. اما می‌تونم بگم: " +
         (dbContext.courses?.[0]?.title ? `مثلاً دوره «${dbContext.courses[0].title}» در کندو ارائه میشه.` : "اطلاعاتی از پایگاه داده دارم.") +
         " اگر مورد خاصی مد نظرتونه بفرمایید تا دقیق‌تر راهنمایی کنم.";
     }
