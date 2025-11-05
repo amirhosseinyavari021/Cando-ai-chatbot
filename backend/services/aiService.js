@@ -1,102 +1,121 @@
 import OpenAI from "openai";
-import { MongoClient } from "mongodb";
-import { searchAcademy } from "./dbSearch.js";
+import mongoose from "mongoose";
+import { systemPrompt } from "../ai/promptTemplate.js";
 
-// --- ENV checks (شفاف)
-if (!process.env.OPENAI_API_KEY) {
-  console.error("❌ OPENAI_API_KEY is missing in ENV");
-}
-if (!process.env.MONGODB_URI) {
-  console.error("❌ MONGODB_URI is missing in ENV");
-}
-
-const client = new OpenAI({
+// --- OpenAI Client ---
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  baseURL: process.env.OPENAI_API_URL || "https://api.openai.com/v1",
 });
 
-const MODEL = process.env.AI_PRIMARY_MODEL || "gpt-4.1-mini";
-const TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 15000);
-const RESTRICT = String(process.env.AI_RESTRICT_MODE || "true").toLowerCase() === "true";
+// --- Helpers ---
+const isEnglish = (s) => /[A-Za-z]/.test(s);
+const sanitize = (s) => (s || "").replace(/\s+/g, " ").trim();
 
-// --- Mongo connection (lazy, per call)
-async function queryDB(q) {
-  if (!process.env.MONGODB_URI) return null;
-  const mongo = new MongoClient(process.env.MONGODB_URI);
-  try {
-    await mongo.connect();
-    const db = mongo.db("cando-ai-db");
-    const data = await searchAcademy(db, q);
-    return data;
-  } catch (e) {
-    console.error("❌ DB error:", e.message);
-    return null;
-  } finally {
-    try { await mongo.close(); } catch { }
-  }
-}
+// **Policy**: فقط درباره کندو (دوره‌ها/اساتید/سیاست‌ها) جواب بده.
+// سوال‌های بی‌ربط → پاسخ کوتاه و محترمانه (بدون خرج توکن زیاد).
+const isOnPolicy = (q) => {
+  const kw = [
+    "کندو", "دوره", "دوره‌ها", "اساتید", "استاد", "ثبت نام", "شهریه",
+    "تقویم", "کلاس", "گواهینامه", "پشتیبانی", "پورتال", "کلاس آنلاین",
+    "Cando", "course", "instructor", "calendar", "tuition", "class"
+  ];
+  const hit = kw.some(k => q.includes(k));
+  return hit;
+};
 
-// --- Restrict: فقط کندو
-function isOffTopic(text) {
-  if (!RESTRICT) return false;
-  const normalized = (text || "").replace(/\s+/g, " ").toLowerCase();
-  // اجازه‌ی احوال‌پرسی + کلمات مرتبط با کندو
-  if (/^(سلام|hi|hello|درود|خسته نباشید)\b/.test(normalized)) return false;
-  const allow = ["کندو", "دوره", "اساتید", "شهریه", "ثبت نام", "زمان", "تقویم", "ui", "ux", "ccna", "devops", "لینوکس", "سیسکو", "fortinet", "میکروتیک", "دواپس", "کلاس", "آنلاین", "حضوری"];
-  const intended = allow.some(k => normalized.includes(k));
-  return !intended;
-}
+// --- DB Query (بدون $text تا ارور ایندکس نگیری) ---
+async function queryDBLoose(q) {
+  const db = mongoose.connection.db;
+  if (!db) return null;
 
-const SYSTEM_MSG = `
-You are Cando AI Assistant — academic advisor for Cando Academy.
-- Speak Persian by default; if user uses English, reply in English.
-- Only answer about Cando Academy (courses, instructors, schedules, prices, policies).
-- Use provided database context when available; never invent facts.
-- Be brief (2–5 sentences), friendly, and helpful.
-- If info not found, say you'll refer to human support.
-- Do not mention databases, RAG, or sources in the reply.
-`;
+  const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
 
-export async function handleChat(userMessage) {
-  if (isOffTopic(userMessage)) {
-    return "من فقط درباره‌ی دوره‌ها، اساتید و اطلاعات آموزشگاه کندو می‌تونم کمک کنم 🙂";
-  }
+  const buckets = [
+    { col: "faq", fields: ["question", "answer"] },
+    { col: "faqs", fields: ["question", "answer"] },
+    { col: "candosite_courses", fields: ["title", "desc", "contentText", "syllabus"] },
+    { col: "candosite_blog", fields: ["title", "contentText"] },
+    { col: "candosite_news", fields: ["title", "contentText"] },
+    { col: "courses", fields: ["title", "description", "tags"] },
+    { col: "instructors", fields: ["name", "bio", "courses"] },
+    { col: "teachers", fields: ["name", "bio", "courses"] },
+  ];
 
-  const dbContext = await queryDB(userMessage); // { faqs, courses, teachers } | null
-
-  const userContent = [
-    dbContext ? `📚 Database context (summarized):
-- FAQs: ${dbContext.faqs?.slice(0, 3).map(f => f.question).join(" | ") || "—"}
-- Courses: ${dbContext.courses?.slice(0, 3).map(c => c.title).join(" | ") || "—"}
-- Teachers: ${dbContext.teachers?.slice(0, 3).map(t => t.name).join(" | ") || "—"}` : "",
-    `👤 User: ${userMessage}`
-  ].filter(Boolean).join("\n\n");
-
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-  try {
-    const resp = await client.chat.completions.create({
-      model: MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_MSG },
-        { role: "user", content: userContent }
-      ],
-      temperature: 0.2,
-      max_tokens: 350,
-    }, { signal: controller.signal });
-
-    clearTimeout(id);
-    const text = resp?.choices?.[0]?.message?.content?.trim();
-    return text || "متوجه نشدم؛ لطفاً دقیق‌تر بفرمایید درباره کدام دوره/استاد می‌پرسید.";
-  } catch (err) {
-    clearTimeout(id);
-    console.error("❌ AI error:", err?.message || err);
-    if (dbContext && (dbContext.faqs?.length || dbContext.courses?.length || dbContext.teachers?.length)) {
-      return "فعلاً به سرویس هوش مصنوعی دسترسی ندارم. اما می‌تونم بگم: " +
-        (dbContext.courses?.[0]?.title ? `مثلاً دوره «${dbContext.courses[0].title}» در کندو ارائه میشه.` : "اطلاعاتی از پایگاه داده دارم.") +
-        " اگر مورد خاصی مد نظرتونه بفرمایید تا دقیق‌تر راهنمایی کنم.";
+  const results = [];
+  for (const b of buckets) {
+    const or = b.fields.map((f) => ({ [f]: { $regex: rx } }));
+    try {
+      const arr = await db.collection(b.col).find({ $or: or }).limit(5).toArray();
+      if (arr && arr.length) {
+        results.push({ collection: b.col, hits: arr });
+      }
+    } catch (e) {
+      // silently skip collection errors
     }
-    return "الان نمی‌تونم پاسخ کامل بدم. لطفاً کمی بعد دوباره امتحان کنید یا با پشتیبانی کندو تماس بگیرید.";
   }
+
+  if (!results.length) return null;
+
+  // ساختن کانتکست تمیز
+  const ctxParts = [];
+  for (const r of results) {
+    for (const doc of r.hits) {
+      const title = sanitize(doc.title || doc.name || doc.question || "");
+      const desc = sanitize(
+        (doc.answer || doc.desc || doc.contentText || doc.description || "")
+      );
+      if (title || desc) ctxParts.push(`• ${title}${desc ? " — " + desc : ""}`);
+    }
+  }
+
+  return ctxParts.slice(0, 30).join("\n");
+}
+
+export async function handleChat(userMessageRaw) {
+  const userMessage = sanitize(userMessageRaw);
+
+  // زبان پاسخ
+  const replyLang = isEnglish(userMessage) ? "en" : "fa";
+
+  // محدودیت دامنه (on-policy)
+  if (!isOnPolicy(userMessage)) {
+    return replyLang === "fa"
+      ? "من برای پاسخ به سوالات مربوط به آموزشگاه کندو طراحی شده‌ام (دوره‌ها، اساتید، ثبت‌نام، تقویم، شهریه و…)."
+      : "I'm focused on Cando Academy only (courses, instructors, enrollment, calendar, tuition, etc.).";
+  }
+
+  // کانتکست از دیتابیس
+  const dbContext = await queryDBLoose(userMessage);
+
+  // ساخت پیام‌ها
+  const messages = [
+    {
+      role: "system",
+      content: systemPrompt,
+    },
+    ...(dbContext
+      ? [{ role: "system", content: `📚 Database context:\n${dbContext}` }]
+      : []),
+    {
+      role: "user",
+      content: userMessage,
+    },
+  ];
+
+  // تماس با مدل
+  const model = process.env.AI_PRIMARY_MODEL || "gpt-4.1";
+  const completion = await openai.chat.completions.create({
+    model,
+    messages,
+    temperature: 0.4,
+  });
+
+  let answer = completion.choices?.[0]?.message?.content?.trim();
+  if (!answer) {
+    answer = replyLang === "fa"
+      ? "در حال حاضر پاسخی پیدا نشد. لطفاً سوال را دقیق‌تر بپرسید یا نام دوره/استاد را ذکر کنید."
+      : "I couldn't find an answer. Please be more specific or mention the exact course/instructor.";
+  }
+
+  return answer;
 }

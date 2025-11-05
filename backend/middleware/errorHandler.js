@@ -1,19 +1,13 @@
-// Standard Express error handlers
-
-const notFound = (req, res, next) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`);
+export const notFound = (req, res, next) => {
   res.status(404);
-  next(error);
+  res.json({ ok: false, message: `Route not found: ${req.originalUrl}` });
 };
 
-const errorHandler = (err, req, res, next) => {
-  let statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  let message = err.message;
-
+export const errorHandler = (err, req, res, _next) => {
+  console.error("❌ ErrorHandler:", err);
+  const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
   res.status(statusCode).json({
-    error: message,
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+    ok: false,
+    message: err?.message || "Server error",
   });
 };
-
-export { notFound, errorHandler };

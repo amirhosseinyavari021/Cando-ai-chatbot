@@ -1,30 +1,20 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const connectDB = async () => {
-  // 1. Check if MONGODB_URI is set
-  if (!process.env.MONGODB_URI) {
-    console.warn('⚠️  MONGODB_URI is not set. Skipping MongoDB connection.');
-    console.warn(
-      'The application will run, but database features (AI, courses, auth, logging) will not work.'
-    );
-    return;
+export default async function connectDB() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    console.error("❌ MONGODB_URI is missing in ENV");
+    process.exit(1);
   }
-
-  // 2. Check for existing idempotent connection
-  // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
-  if (mongoose.connection.readyState >= 1) {
-    console.log('🗄️  MongoDB is already connected.');
-    return;
-  }
-
-  // 3. Attempt to connect
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    const conn = await mongoose.connect(uri, {
+      dbName: undefined, // db in URI
+      autoIndex: false,
+      serverSelectionTimeoutMS: 8000,
+    });
     console.log(`🗄️  MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error(`Database Connection Error: ${error.message}`);
-    process.exit(1); // Exit process with failure
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err?.message || err);
+    process.exit(1);
   }
-};
-
-export default connectDB;
+}
