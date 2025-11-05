@@ -61,7 +61,6 @@ export const getRestrictedFallback = (lang = 'fa') => {
  * @param {string} lang - Detected language ('fa' or 'en').
  * @returns {string} The polite "not found" message.
  */
-// (FIX) Removed the stray '_' after the function definition
 export const getDbFallback = (lang = 'fa') => {
   if (lang === 'en') {
     return "I don't have information on that in my database right now, but I can ask our support team for you.";

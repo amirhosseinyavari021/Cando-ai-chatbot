@@ -8,8 +8,10 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import asyncHandler from 'express-async-handler'; // <-- (NEW) Import a-sync handler
 import connectDB from './config/db.js';
 import aiRoutes from './routes/aiRoutes.js';
+import { getAIResponse } from './controllers/aiController.js'; // <-- (NEW) Import controller
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import logger from './middleware/logger.js';
 
@@ -39,9 +41,11 @@ app.use(
 // All AI-related traffic (e.g., /api/ai/chat) is handled here.
 app.use('/api/ai', aiRoutes);
 
-// (Add other routes like admin, courses, etc. here if needed)
-// import adminRoutes from './routes/adminRoutes.js';
-// app.use('/api/admin', adminRoutes);
+// --- (NEW FIX) Catch old frontend endpoint ---
+// The frontend is still calling /api/chat/stream, which we removed.
+// This adds it back and points it directly to the new getAIResponse controller.
+app.post('/api/chat/stream', asyncHandler(getAIResponse));
+app.post('/api/ai/ask', asyncHandler(getAIResponse)); // Also ensure legacy /ask works
 
 // ============================================
 // ❌ Error Handling
