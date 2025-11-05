@@ -22,7 +22,7 @@ const config = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OPENAI_API_URL: process.env.OPENAI_API_URL || 'https://api.openai.com/v1',
   AI_PRIMARY_MODEL: process.env.AI_PRIMARY_MODEL || 'gpt-4-turbo',
-  AI_PRIMARY_PROMPT_ID: process.env.AI_PRIMARY_PROMPT_ID, // Kept for old mode
+  AI_PRIMARY_PROMPT_ID: process.env.AI_PRIMARY_PROMPT_ID,
 
   // --- Fallback (For old mode) ---
   AI_FALLBACK_ENABLED: process.env.AI_FALLBACK_ENABLED === 'true',
@@ -32,13 +32,12 @@ const config = {
   // --- Behavior ---
   AI_TIMEOUT_MS: parseInt(process.env.AI_TIMEOUT_MS || '15000', 10),
 
-  // --- (NEW) Restricted Mode ---
-  AI_RESTRICT_MODE: process.env.AI_RESTRICT_MODE === 'true',
+  // --- (DELETED) AI_RESTRICT_MODE has been removed ---
 };
 
 // Debug log
 console.log('🧠 AI Config initialized:');
 console.log(`   🔑 OPENAI_API_KEY: ${config.OPENAI_API_KEY ? '✅' : '❌ Missing'}`);
-console.log(`   🛡️  RESTRICT_MODE: ${config.AI_RESTRICT_MODE ? '✅' : '❌ (Running in old, unrestricted mode)'}`);
+console.log(`   🧩 PROMPT_ID: ${config.AI_PRIMARY_PROMPT_ID ? '✅' : '❌ Missing'}`);
 
 export default config;

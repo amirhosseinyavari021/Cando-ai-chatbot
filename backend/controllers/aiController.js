@@ -1,12 +1,12 @@
 import asyncHandler from 'express-async-handler';
 import { v4 as uuidv4 } from 'uuid';
-import OpenAI from 'openai';
+import OpenAI from 'openai'; // OpenAI import remains for potential future use
 
 // --- Config ---
 import config from '../config/ai.js';
 
 // --- Services ---
-import { routeRequest } from '../services/aiRouter.js'; // Old (unrestricted) router
+import { routeRequest } from '../services/aiRouter.js'; // This is the RAG router
 import { updateMemory } from '../services/conversationMemory.js';
 import logger from '../middleware/logger.js';
 
@@ -14,22 +14,11 @@ import logger from '../middleware/logger.js';
 import { detectLanguage } from '../utils/nlu.js';
 import sanitizeOutput from '../utils/sanitizeOutput.js';
 
-// --- (NEW) Restricted Mode Imports ---
-import {
-  systemMessage,
-  buildUserPrompt,
-  getRestrictedFallback,
-  getDbFallback,
-} from '../ai/promptTemplate.js';
-import {
-  detectIntent,
-  searchAcademicDB,
-  formatContext,
-  truncateContext,
-} from '../utils/contextUtils.js';
+// --- (DELETED) Restricted Mode Imports are gone ---
+// const { systemMessage, ... } = '../ai/promptTemplate.js';
+// const { detectIntent, ... } = '../utils/contextUtils.js';
 
-// --- (NEW) Setup OpenAI instance ---
-// We only initialize it if the key exists
+// Setup OpenAI instance (Still useful for other parts)
 let openai;
 if (config.OPENAI_API_KEY) {
   openai = new OpenAI({ apiKey: config.OPENAI_API_KEY });
@@ -38,7 +27,7 @@ if (config.OPENAI_API_KEY) {
 }
 
 /**
- * @desc    Get AI response (handles both restricted and unrestricted modes)
+ * @desc    Get AI response (Simplified logic)
  * @route   POST /api/ai/chat (or /api/ai/ask, /api/chat/stream)
  * @access  Public
  */
@@ -54,98 +43,17 @@ const getAIResponse = asyncHandler(async (req, res) => {
   }
 
   // ===================================================================
-  // --- 🛡️ NEW: AI RESTRICTED MODE ---
+  // --- (DELETED) AI RESTRICTED MODE ---
   // ===================================================================
-  if (config.AI_RESTRICT_MODE) {
-    const lang = detectLanguage(message);
-
-    // 1. Detect Intent (Is it about Cando?)
-    const intent = detectIntent(message);
-
-    if (!intent) {
-      // --- Off-topic query ---
-      logger.warn(`[Restricted] Off-topic query detected: "${message}"`);
-      const fallbackMsg = getRestrictedFallback(lang);
-      await updateMemory(conversationId, { role: 'user', content: message });
-      await updateMemory(conversationId, {
-        role: 'bot',
-        content: `[Fallback] ${fallbackMsg}`,
-      });
-      // --- (FIX) Send response in 'text' format for frontend ---
-      return res.json({ text: fallbackMsg, conversationId });
-    }
-
-    // 2. Search Academic DB
-    const dbResults = await searchAcademicDB(intent, message);
-
-    if (!dbResults || dbResults.length === 0) {
-      // --- On-topic, but no DB results ---
-      logger.warn(`[Restricted] No DB results for intent "${intent}"`);
-      const dbFallbackMsg = getDbFallback(lang);
-      await updateMemory(conversationId, { role: 'user', content: message });
-      await updateMemory(conversationId, {
-        role: 'bot',
-        content: `[DB Fallback] ${dbFallbackMsg}`,
-      });
-      // --- (FIX) Send response in 'text' format for frontend ---
-      return res.json({ text: dbFallbackMsg, conversationId });
-    }
-
-    // 3. Format Context and Call AI
-    const rawContext = formatContext(dbResults);
-    const dbContext = truncateContext(rawContext);
-
-    // Build the prompt (No chat history is sent, as requested)
-    const messages = [
-      { role: 'system', content: systemMessage },
-      { role: 'user', content: buildUserPrompt(message, dbContext) },
-    ];
-
-    try {
-      const requestOptions = {
-        timeout: config.AI_TIMEOUT_MS || 15000, // Default to 15s
-      };
-
-      const completion = await openai.chat.completions.create(
-        {
-          model: config.AI_PRIMARY_MODEL,
-          messages: messages,
-          temperature: 0.2, // Low temp for factual, non-creative answers
-          max_tokens: 250, // Keep responses concise
-        },
-        requestOptions
-      );
-
-      const responseText =
-        completion.choices[0]?.message?.content ||
-        getDbFallback(lang); // Use DB fallback on AI failure
-
-      const sanitizedResponse = sanitizeOutput(responseText);
-
-      // Log for analysis
-      await updateMemory(conversationId, { role: 'user', content: message });
-      await updateMemory(conversationId, {
-        role: 'bot',
-        content: sanitizedResponse,
-      });
-
-      // --- Send response in 'text' format for frontend ---
-      return res.json({ text: sanitizedResponse, conversationId });
-    } catch (err) {
-      logger.error(`[Restricted] OpenAI API Error: ${err.message}`);
-      res.status(500).json({ error: err.message });
-    }
-    return; // End restricted mode execution
-  }
+  // The 'if (config.AI_RESTRICT_MODE)' block has been completely removed.
+  // All requests now fall through to the legacy RAG router.
 
   // ===================================================================
-  // ---  Legacy: Unrestricted Mode ---
-  // (This code runs if AI_RESTRICT_MODE is false)
+  // ---  Legacy: Unrestricted Mode (Now the default) ---
   // ===================================================================
-  logger.info('[Unrestricted] Routing to old aiRouter...');
+  logger.info('[RAG Mode] Routing to aiRouter...');
 
-  // ... (Legacy code remains unchanged, but we also ensure it sends 'text') ...
-
+  // 1. --- (Legacy) Check for Roadmap ---
   const { inferRoleSlug } = await import('../utils/nlu.js');
   const Roadmap = (await import('../models/Roadmap.js')).default;
 
@@ -158,16 +66,21 @@ const getAIResponse = asyncHandler(async (req, res) => {
       const responsePayload = { type: 'roadmap', data: roadmap, lang: lang };
       await updateMemory(conversationId, { role: 'user', content: message });
       await updateMemory(conversationId, { role: 'bot', content: responsePayload });
+      // Send response in 'text' format for frontend
       return res.json({ text: responsePayload, conversationId });
     }
   }
 
+  // 2. --- (Legacy) Call old AI Router (aiRouter.js) ---
+  // This router now uses the new, strong prompt from promptTemplate.js
   const aiResult = await routeRequest(message, conversationId);
   const sanitizedResponse = sanitizeOutput(aiResult.text);
 
+  // We still use updateMemory here, as the old controller did
   await updateMemory(conversationId, { role: 'user', content: message });
   await updateMemory(conversationId, { role: 'bot', content: sanitizedResponse });
 
+  // Send response in 'text' format for frontend
   res.json({
     text: sanitizedResponse,
     conversationId: conversationId,
