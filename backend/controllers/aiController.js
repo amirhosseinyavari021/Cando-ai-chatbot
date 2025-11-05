@@ -43,7 +43,7 @@ if (config.OPENAI_API_KEY) {
  * @access  Public
  */
 const getAIResponse = asyncHandler(async (req, res) => {
-  // --- (FIX) Read message from both "message" (new) and "text" (old frontend) ---
+  // --- Read message from both "message" (new) and "text" (old frontend) ---
   const { conversationId: reqConvId } = req.body;
   const message = req.body.message || req.body.text;
   const conversationId = reqConvId || uuidv4();
@@ -71,7 +71,8 @@ const getAIResponse = asyncHandler(async (req, res) => {
         role: 'bot',
         content: `[Fallback] ${fallbackMsg}`,
       });
-      return res.json({ message: fallbackMsg, conversationId });
+      // --- (FIX) Send response in 'text' format for frontend ---
+      return res.json({ text: fallbackMsg, conversationId });
     }
 
     // 2. Search Academic DB
@@ -86,7 +87,8 @@ const getAIResponse = asyncHandler(async (req, res) => {
         role: 'bot',
         content: `[DB Fallback] ${dbFallbackMsg}`,
       });
-      return res.json({ message: dbFallbackMsg, conversationId });
+      // --- (FIX) Send response in 'text' format for frontend ---
+      return res.json({ text: dbFallbackMsg, conversationId });
     }
 
     // 3. Format Context and Call AI
@@ -100,7 +102,6 @@ const getAIResponse = asyncHandler(async (req, res) => {
     ];
 
     try {
-      // --- (FIX) Add request options with timeout ---
       const requestOptions = {
         timeout: config.AI_TIMEOUT_MS || 15000, // Default to 15s
       };
@@ -112,7 +113,7 @@ const getAIResponse = asyncHandler(async (req, res) => {
           temperature: 0.2, // Low temp for factual, non-creative answers
           max_tokens: 250, // Keep responses concise
         },
-        requestOptions // --- (FIX) Pass options as the second argument ---
+        requestOptions
       );
 
       const responseText =
@@ -128,8 +129,7 @@ const getAIResponse = asyncHandler(async (req, res) => {
         content: sanitizedResponse,
       });
 
-      // --- (FIX) Send response in the format the frontend expects ---
-      // The original server.js sent { "text": "..." }
+      // --- Send response in 'text' format for frontend ---
       return res.json({ text: sanitizedResponse, conversationId });
     } catch (err) {
       logger.error(`[Restricted] OpenAI API Error: ${err.message}`);
@@ -144,13 +144,13 @@ const getAIResponse = asyncHandler(async (req, res) => {
   // ===================================================================
   logger.info('[Unrestricted] Routing to old aiRouter...');
 
-  // 1. --- (Legacy) Check for Roadmap ---
-  // Note: This NLU is different from the restricted mode's 'detectIntent'
-  const { inferRoleSlug } = await import('../utils/nlu.js'); // Dynamic import
-  const Roadmap = (await import('../models/Roadmap.js')).default; // Dynamic import
+  // ... (Legacy code remains unchanged, but we also ensure it sends 'text') ...
+
+  const { inferRoleSlug } = await import('../utils/nlu.js');
+  const Roadmap = (await import('../models/Roadmap.js')).default;
 
   const lang = detectLanguage(message);
-  const roleSlug = inferRoleSlug(message); // Uses old NLU
+  const roleSlug = inferRoleSlug(message);
 
   if (roleSlug) {
     const roadmap = await Roadmap.findOne({ role_slug: roleSlug, language: lang });
@@ -158,22 +158,16 @@ const getAIResponse = asyncHandler(async (req, res) => {
       const responsePayload = { type: 'roadmap', data: roadmap, lang: lang };
       await updateMemory(conversationId, { role: 'user', content: message });
       await updateMemory(conversationId, { role: 'bot', content: responsePayload });
-      // --- (FIX) Send response in the format the frontend expects ---
       return res.json({ text: responsePayload, conversationId });
-    } else {
-      // ... (rest of old roadmap-not-found logic) ...
     }
   }
 
-  // 2. --- (Legacy) Call old AI Router ---
   const aiResult = await routeRequest(message, conversationId);
   const sanitizedResponse = sanitizeOutput(aiResult.text);
 
-  // We still use updateMemory here, as the old controller did
   await updateMemory(conversationId, { role: 'user', content: message });
   await updateMemory(conversationId, { role: 'bot', content: sanitizedResponse });
 
-  // --- (FIX) Send response in the format the frontend expects ---
   res.json({
     text: sanitizedResponse,
     conversationId: conversationId,

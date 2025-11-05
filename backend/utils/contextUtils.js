@@ -11,25 +11,26 @@ const CONTEXT_MAX_LENGTH = 2000; // 2000 characters
 
 /**
  * Tries to infer the user's intent to query a specific collection.
+ * (FIXED: Regex is now less strict for Persian plural forms)
  * @param {string} text - The user's chat message.
  * @returns {'faq' | 'courses' | 'teachers' | null} The collection intent or null.
  */
 export const detectIntent = (text) => {
   const t = text.toLowerCase();
 
-  // Keywords for courses
-  if (/\b(دوره|کلاس|course|class|bootcamp|مدرک)\b/.test(t)) {
+  // Keywords for courses (Matches 'دوره', 'دوره‌ها', 'دوره‌هایی')
+  if (/\b(دوره|کلاس|course|class|bootcamp|مدرک)/i.test(t)) {
     return 'courses';
   }
 
-  // Keywords for instructors
-  if (/\b(استاد|اساتید|مدرس|instructor|teacher|teachers)\b/.test(t)) {
+  // Keywords for instructors (Matches 'استاد', 'اساتید')
+  if (/\b(استاد|اساتید|مدرس|instructor|teacher|teachers)/i.test(t)) {
     return 'teachers';
   }
 
   // Keywords for FAQ (general info, payment, etc.)
   if (
-    /\b(سوال|چطور|چگونه|هزینه|قیمت|پرداخت|آدرس|مکان|faq|question|how|payment|price|cost|address|location|policy|کندو)\b/.test(
+    /\b(سوال|چطور|چگونه|هزینه|قیمت|پرداخت|آدرس|مکان|faq|question|how|payment|price|cost|address|location|policy|کندو)/i.test(
       t
     )
   ) {
