@@ -1,103 +1,65 @@
 // ============================================
-// 🧠 Cando Chatbot Backend (Final Stable Build)
+// 🧠 Cando Chatbot Backend — Final
 // ============================================
 
+import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-dotenv.config();
-
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
-import path from "path";
-import { fileURLToPath } from "url";
-import chatRouter from "./routes/chatRouter.js"; // ✅ new unified chat route
-import logger from "./middleware/logger.js";
+import chatRouter from "./routes/chatRouter.js";
 
-// ============================================
-// ⚙️ Setup
-// ============================================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load .env from backend/.env explicitly
+dotenv.config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// ============================================
-// 🧩 Core Middleware
-// ============================================
+// --- Basic sanity checks
+if (!process.env.MONGODB_URI) {
+  console.error("❌ MONGODB_URI is missing in backend/.env");
+}
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ OPENAI_API_KEY is missing in backend/.env");
+}
+
+// --- Core Middleware
 app.use(cors({ origin: "*", methods: ["GET", "POST"], allowedHeaders: ["Content-Type"] }));
 app.use(express.json({ limit: "10mb" }));
-
-// Request logging
 app.use(
   morgan("dev", {
-    stream: {
-      write: (msg) => logger.info(msg.trim()),
-    },
+    stream: { write: (msg) => console.info(msg.trim()) },
   })
 );
 
-// ============================================
-// 🗄️ MongoDB Connection
-// ============================================
-import { MongoClient } from "mongodb";
-const uri = process.env.MONGODB_URI;
-if (!uri) {
-  console.error("❌ MONGODB_URI not found in environment");
-  process.exit(1);
-}
-const client = new MongoClient(uri);
-(async () => {
-  try {
-    await client.connect();
-    console.log("✅ MongoDB connected successfully");
-  } catch (err) {
-    console.error("❌ MongoDB connection failed:", err);
-    process.exit(1);
-  }
-})();
+// --- Health
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true, service: "Cando Chatbot", env: process.env.NODE_ENV || "dev" });
+});
 
-// ============================================
-// 📍 Routes
-// ============================================
-
-// Health check
-app.get("/api/health", (_req, res) => res.json({ ok: true, message: "Cando Chatbot backend is healthy ✅" }));
-
-// Main chatbot API
+// --- API (unified)
 app.use("/api", chatRouter);
 
-// Legacy route support (for old frontend versions)
-app.post("/api/chat/stream", async (req, res, next) => {
-  try {
-    req.url = "/chat/stream";
-    next();
-  } catch (err) {
-    res.status(500).json({ ok: false, error: "Internal route error" });
-  }
+// --- Legacy compat: /api/chat/stream
+app.post("/api/chat/stream", (req, res, next) => {
+  req.url = "/chat/stream";
+  next();
 }, chatRouter);
 
-// ============================================
-// ❌ 404 & Error Handlers
-// ============================================
+// --- 404 / Errors
 app.use((req, res) => {
-  res.status(404).json({
-    ok: false,
-    message: "مسیر درخواستی یافت نشد.",
-  });
+  res.status(404).json({ ok: false, message: "مسیر درخواستی یافت نشد." });
 });
 
 app.use((err, _req, res, _next) => {
   console.error("❌ Server Error:", err);
-  res.status(500).json({
-    ok: false,
-    message: "خطایی در سرور رخ داده است.",
-  });
+  res.status(500).json({ ok: false, message: "خطایی در سرور رخ داد." });
 });
 
-// ============================================
-// 🚀 Start Server
-// ============================================
 app.listen(PORT, () => {
-  console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT} (${process.env.NODE_ENV || "dev"})`);
 });

@@ -1,91 +1,51 @@
-// ESM
-// backend/services/dbSearch.js
-import { MongoClient } from "mongodb";
+// ساده و سریع: جست‌وجوی regex روی سه کالکشن تولید شده توسط کرالر
+// اگر اسم کالکشن‌ها متفاوت است، همین‌جا تنظیم کن.
 
-const uri = process.env.MONGODB_URI;
-if (!uri) {
-  // PM2/console will show this once at boot
-  console.error("❌ MONGODB_URI is not set");
-}
-let client;
+const C_COLL = "candosite_courses";
+const T_COLL = "candosite_teachers";
+const F_COLL = "candosite_faq";
 
-async function getDb() {
-  if (!client) {
-    client = new MongoClient(uri, { ignoreUndefined: true });
-    await client.connect();
-  }
-  return client.db();
-}
+export async function searchAcademy(db, query) {
+  const q = (query || "").toString().trim();
+  if (!q) return { faqs: [], courses: [], teachers: [] };
 
-// simple intent classifier to choose collections
-export function detectIntent(text = "") {
-  const t = (text || "").toLowerCase();
-  if (/(faq|سوالات متداول|سوال|پرسش)/.test(t)) return "faq";
-  if (/(استاد|مدرس|teacher|instructor|اساتید)/.test(t)) return "teachers";
-  if (/(course|دوره|کلاس|سرفصل|ثبت نام|شهریه|قیمت)/.test(t)) return "courses";
-  // for career/path queries like "مهندس شبکه"
-  if (/(مسیر|نقشه راه|شبکه|devops|دواپس|لینوکس|cisco|mikrotik)/.test(t)) return "courses";
-  return "faq"; // default
-}
+  const rx = new RegExp(escapeRegex(q), "i");
 
-export async function searchFaq(q, limit = 5) {
-  const db = await getDb();
-  const col = db.collection("candosite_faq");
-  // flexible search: exact or partial
-  const cursor = col
-    .find({ $or: [{ question: { $regex: q, $options: "i" } }, { answer: { $regex: q, $options: "i" } }] })
-    .limit(limit);
-  return await cursor.toArray();
-}
+  const [faqs, courses, teachers] = await Promise.all([
+    // FAQ
+    db.collection(F_COLL).find({
+      $or: [{ question: rx }, { answer: rx }, { contentText: rx }]
+    }).limit(5).toArray(),
 
-export async function searchCourses(q, limit = 5) {
-  const db = await getDb();
-  const col = db.collection("candosite_courses");
-  const cursor = col
-    .find({
-      $or: [
-        { title: { $regex: q, $options: "i" } },
-        { desc: { $regex: q, $options: "i" } },
-        { contentText: { $regex: q, $options: "i" } },
-        { instructors: { $elemMatch: { $regex: q, $options: "i" } } },
-      ],
-    })
-    .limit(limit);
-  return await cursor.toArray();
-}
+    // Courses
+    db.collection(C_COLL).find({
+      $or: [{ title: rx }, { desc: rx }, { contentText: rx }, { instructors: rx }]
+    }).limit(5).toArray(),
 
-export async function searchTeachers(q, limit = 5) {
-  const db = await getDb();
-  const col = db.collection("candosite_teachers");
-  const cursor = col
-    .find({
-      $or: [
-        { name: { $regex: q, $options: "i" } },
-        { bio: { $regex: q, $options: "i" } },
-        { courses: { $elemMatch: { $regex: q, $options: "i" } } },
-      ],
-    })
-    .limit(limit);
-  return await cursor.toArray();
-}
-
-export async function smartSearch(userText) {
-  const intent = detectIntent(userText);
-  const [faq, courses, teachers] = await Promise.all([
-    intent === "faq" ? searchFaq(userText, 6) : Promise.resolve([]),
-    intent === "courses" ? searchCourses(userText, 6) : Promise.resolve([]),
-    intent === "teachers" ? searchTeachers(userText, 6) : Promise.resolve([]),
+    // Teachers
+    db.collection(T_COLL).find({
+      $or: [{ name: rx }, { bio: rx }, { courses: rx }, { contentText: rx }]
+    }).limit(5).toArray(),
   ]);
 
-  // If nothing found, broaden the net a bit for helpfulness (but still academy-only)
-  if (!faq.length && !courses.length && !teachers.length) {
-    const [f2, c2, t2] = await Promise.all([
-      searchFaq("", 3),
-      searchCourses("", 3),
-      searchTeachers("", 3),
-    ]);
-    return { faq: f2, courses: c2, teachers: t2 };
-  }
+  // خلاصه‌سازی سبک برای پرامپت
+  const faqsSlim = (faqs || []).map(f => ({
+    question: f.question || f.title || "",
+    answer: f.answer || f.desc || "",
+  }));
 
-  return { faq, courses, teachers };
+  const coursesSlim = (courses || []).map(c => ({
+    title: c.title || "",
+    desc: c.desc || "",
+  }));
+
+  const teachersSlim = (teachers || []).map(t => ({
+    name: t.name || "",
+  }));
+
+  return { faqs: faqsSlim, courses: coursesSlim, teachers: teachersSlim };
+}
+
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
