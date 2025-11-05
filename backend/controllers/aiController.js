@@ -39,14 +39,17 @@ if (config.OPENAI_API_KEY) {
 
 /**
  * @desc    Get AI response (handles both restricted and unrestricted modes)
- * @route   POST /api/ai/chat (or /api/ai/ask)
+ * @route   POST /api/ai/chat (or /api/ai/ask, /api/chat/stream)
  * @access  Public
  */
 const getAIResponse = asyncHandler(async (req, res) => {
-  const { message, conversationId: reqConvId } = req.body;
+  // --- (FIX) Read message from both "message" (new) and "text" (old frontend) ---
+  const { conversationId: reqConvId } = req.body;
+  const message = req.body.message || req.body.text;
   const conversationId = reqConvId || uuidv4();
 
   if (!message) {
+    logger.error('[400] Request failed: "Empty message". Body:', req.body);
     return res.status(400).json({ error: 'Empty message' });
   }
 
@@ -125,7 +128,9 @@ const getAIResponse = asyncHandler(async (req, res) => {
         content: sanitizedResponse,
       });
 
-      return res.json({ message: sanitizedResponse, conversationId });
+      // --- (FIX) Send response in the format the frontend expects ---
+      // The original server.js sent { "text": "..." }
+      return res.json({ text: sanitizedResponse, conversationId });
     } catch (err) {
       logger.error(`[Restricted] OpenAI API Error: ${err.message}`);
       res.status(500).json({ error: err.message });
@@ -153,7 +158,8 @@ const getAIResponse = asyncHandler(async (req, res) => {
       const responsePayload = { type: 'roadmap', data: roadmap, lang: lang };
       await updateMemory(conversationId, { role: 'user', content: message });
       await updateMemory(conversationId, { role: 'bot', content: responsePayload });
-      return res.json({ message: responsePayload, conversationId });
+      // --- (FIX) Send response in the format the frontend expects ---
+      return res.json({ text: responsePayload, conversationId });
     } else {
       // ... (rest of old roadmap-not-found logic) ...
     }
@@ -167,8 +173,9 @@ const getAIResponse = asyncHandler(async (req, res) => {
   await updateMemory(conversationId, { role: 'user', content: message });
   await updateMemory(conversationId, { role: 'bot', content: sanitizedResponse });
 
+  // --- (FIX) Send response in the format the frontend expects ---
   res.json({
-    message: sanitizedResponse,
+    text: sanitizedResponse,
     conversationId: conversationId,
   });
 });
