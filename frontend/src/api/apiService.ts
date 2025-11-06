@@ -10,27 +10,33 @@ interface SendMessageParams {
 }
 
 export const streamChatResponse = async ({ text, sessionId, signal }: SendMessageParams): Promise<ReadableStream<Uint8Array>> => {
-  // FIX: Changed endpoint from /chat/stream to /ai/chat to match backend routes
+  // FIX: Ensure endpoint is /ai/chat to match backend routes and error log
   const response = await fetch(`${API_BASE_URL}/ai/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, sessionId }), // 'text' matches backend controller
+    body: JSON.stringify({ text, sessionId }),
     signal,
   })
 
-  // FIX: Changed 'res' to 'response' to fix ReferenceError
+  // FIX: Check if the response was successful. This catches 404s, 500s, etc.
   if (!response.ok) {
     throw new Error(`API request failed with status ${response.status}`)
   }
 
-  // FIX: Removed event-stream logic as backend sends JSON.
-  // Made the JSON "simulation" the primary path.
+  // FIX: The backend sends JSON, not a stream. We parse the JSON response.
   const data = await response.json()
+
+  // FIX: Safely access 'data.text' to prevent the TypeError
+  // If data or data.text is undefined, provide a fallback message.
+  const responseText = (data && typeof data.text === 'string')
+    ? data.text
+    : 'Sorry, I received an invalid response from the server.'
+
+  // Simulate a streaming response from the complete JSON text
   const simulated = new ReadableStream<Uint8Array>({
     async start(controller) {
       const encoder = new TextEncoder()
-      // The backend returns { text: "..." }, so we use data.text
-      const words = String(data.text || '').split(' ')
+      const words = String(responseText).split(' ')
       for (const w of words) {
         // Reduced delay for a faster-feeling response
         await new Promise((r) => setTimeout(r, 20))
