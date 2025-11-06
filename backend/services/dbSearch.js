@@ -1,26 +1,59 @@
-const C_COLL = "candosite_courses";
-const T_COLL = "candosite_teachers";
-const F_COLL = "candosite_faq";
+// backend/services/dbSearch.js
+import { getDB } from "../utils/mongo.js";
 
-export async function searchAcademy(db, query) {
-  const q = (query || "").toString().trim();
-  if (!q) return { faqs: [], courses: [], teachers: [] };
+/**
+ * جستجوی معنایی/کلمه‌ای ساده روی کالکشن‌های موجود.
+ * اولویت با FAQs است؛ بعد Courses. اگر ایندکس متنی داری، خودش استفاده می‌کند.
+ */
+export async function semanticSearch(userQuery, limit = 1) {
+  const db = getDB();
+  const q = (userQuery || "").trim();
+  if (!q) return [];
 
-  const rx = new RegExp(escapeRegex(q), "i");
+  // سعی می‌کنیم از $text استفاده کنیم؛ اگر ایندکس نبود، fallback به RegExp
+  const tryText = async (collection, project = {}) => {
+    try {
+      return await db
+        .collection(collection)
+        .find({ $text: { $search: q } }, { projection: { score: { $meta: "textScore" }, ...project } })
+        .sort({ score: { $meta: "textScore" } })
+        .limit(limit)
+        .toArray();
+    } catch {
+      const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+      return await db
+        .collection(collection)
+        .find({ $or: [{ question: rx }, { answer: rx }, { title: rx }, { description: rx }, { content: rx }, { name: rx }] }, { projection: project })
+        .limit(limit)
+        .toArray();
+    }
+  };
 
-  const [faqs, courses, teachers] = await Promise.all([
-    db.collection(F_COLL).find({ $or: [{ question: rx }, { answer: rx }, { contentText: rx }] }).limit(5).toArray(),
-    db.collection(C_COLL).find({ $or: [{ title: rx }, { desc: rx }, { contentText: rx }, { instructors: rx }] }).limit(5).toArray(),
-    db.collection(T_COLL).find({ $or: [{ name: rx }, { bio: rx }, { courses: rx }, { contentText: rx }] }).limit(5).toArray(),
-  ]);
+  // 1) FAQs
+  let hits = await tryText("faqs", { question: 1, answer: 1 });
+  if (hits?.length) {
+    return hits.map((d) => ({
+      source: "faqs",
+      text: d.answer || d.response || "",
+      question: d.question || "",
+      score: d.score || 1,
+    }));
+  }
 
-  const faqsSlim = (faqs || []).map(f => ({ question: f.question || f.title || "", answer: f.answer || f.desc || "" }));
-  const coursesSlim = (courses || []).map(c => ({ title: c.title || "", desc: c.desc || "" }));
-  const teachersSlim = (teachers || []).map(t => ({ name: t.name || "" }));
+  // 2) Courses
+  hits = await tryText("courses", { title: 1, description: 1, syllabus: 1 });
+  if (hits?.length) {
+    return hits.map((d) => ({
+      source: "courses",
+      text:
+        d.description ||
+        (Array.isArray(d.syllabus) ? d.syllabus.join(" • ") : d.syllabus) ||
+        d.title ||
+        "",
+      question: d.title || "",
+      score: d.score || 1,
+    }));
+  }
 
-  return { faqs: faqsSlim, courses: coursesSlim, teachers: teachersSlim };
-}
-
-function escapeRegex(s) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return [];
 }

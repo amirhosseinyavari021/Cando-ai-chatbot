@@ -1,12 +1,14 @@
-import React from 'react'
-import ChatPage from './pages/ChatPage'
-import { useTheme } from './hooks/useTheme'
+import React from "react";
+import { MessageList } from "@/components/MessageList";
+import { Composer } from "@/components/Composer";
 
-export default function App() {
-  useTheme()
+function App() {
   return (
-    <div dir="rtl" className="font-sans">
-      <ChatPage />
+    <div className="flex flex-col h-screen bg-background text-text-default">
+      <MessageList />
+      <Composer />
     </div>
-  )
+  );
 }
+
+export default App;

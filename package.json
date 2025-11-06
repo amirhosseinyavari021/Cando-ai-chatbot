@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "express-async-handler": "^1.2.0"
+    "express-async-handler": "^1.2.0",
+    "memory-cache": "^0.2.0",
+    "uuid": "^13.0.0"
   }
 }

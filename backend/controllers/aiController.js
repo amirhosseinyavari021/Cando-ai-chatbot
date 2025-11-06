@@ -1,90 +1,49 @@
-import asyncHandler from 'express-async-handler';
-import { v4 as uuidv4 } from 'uuid';
-import OpenAI from 'openai'; // OpenAI import remains for potential future use
+// backend/controllers/aiController.js
+import { semanticSearch } from "../services/dbSearch.js";
+import { callPrimaryAI } from "../services/aiService.js";
 
-// --- Config ---
-import config from '../config/ai.js';
+const RESTRICT_MODE = String(process.env.RESTRICT_MODE || "true").toLowerCase() === "true";
 
-// --- Services ---
-import { routeRequest } from '../services/aiRouter.js'; // This is the RAG router
-import { updateMemory } from '../services/conversationMemory.js';
-import logger from '../middleware/logger.js';
+export async function sendChat(req, res) {
+  try {
+    const { message = "", userId = "web-client", context = {} } = req.body || {};
+    const q = String(message || "").trim();
 
-// --- Utils ---
-import { detectLanguage } from '../utils/nlu.js';
-import sanitizeOutput from '../utils/sanitizeOutput.js';
+    if (!q) {
+      return res.status(400).json({ ok: false, message: "EMPTY_MESSAGE" });
+    }
 
-// --- (DELETED) Restricted Mode Imports are gone ---
-// const { systemMessage, ... } = '../ai/promptTemplate.js';
-// const { detectIntent, ... } = '../utils/contextUtils.js';
+    // 1) جستجو در دیتابیس
+    const hits = await semanticSearch(q, 1);
+    if (hits.length && hits[0].text) {
+      return res.json({ ok: true, result: hits[0].text, source: hits[0].source });
+    }
 
-// Setup OpenAI instance (Still useful for other parts)
-let openai;
-if (config.OPENAI_API_KEY) {
-  openai = new OpenAI({ apiKey: config.OPENAI_API_KEY });
-} else {
-  logger.error('❌ Missing OPENAI_API_KEY in .env. AI features will fail.');
+    // 2) اگر محدود هستیم، پیام سیاست را بده
+    if (RESTRICT_MODE) {
+      return res.json({
+        ok: true,
+        result: "در حال حاضر پاسخ مستقیمی در پایگاه داده Cando پیدا نشد. لطفاً سؤال‌تان را دقیق‌تر بپرسید یا به پشتیبانی پیام دهید.",
+        source: "policy",
+      });
+    }
+
+    // 3) در غیر اینصورت از AI کمک بگیر
+    const ai = await callPrimaryAI(q, { userId, context });
+    if (ai?.ok && ai?.result) {
+      return res.json({ ok: true, result: ai.result, source: "ai" });
+    }
+
+    return res.json({
+      ok: false,
+      message: "NO_RESULT",
+    });
+  } catch (err) {
+    console.error("sendChat error:", err);
+    return res.status(500).json({ ok: false, message: "SERVER_ERROR" });
+  }
 }
 
-/**
- * @desc    Get AI response (Simplified logic)
- * @route   POST /api/ai/chat (or /api/ai/ask, /api/chat/stream)
- * @access  Public
- */
-const getAIResponse = asyncHandler(async (req, res) => {
-  // --- Read message from both "message" (new) and "text" (old frontend) ---
-  const { conversationId: reqConvId } = req.body;
-  const message = req.body.message || req.body.text;
-  const conversationId = reqConvId || uuidv4();
-
-  if (!message) {
-    logger.error('[400] Request failed: "Empty message". Body:', req.body);
-    return res.status(400).json({ error: 'Empty message' });
-  }
-
-  // ===================================================================
-  // --- (DELETED) AI RESTRICTED MODE ---
-  // ===================================================================
-  // The 'if (config.AI_RESTRICT_MODE)' block has been completely removed.
-  // All requests now fall through to the legacy RAG router.
-
-  // ===================================================================
-  // ---  Legacy: Unrestricted Mode (Now the default) ---
-  // ===================================================================
-  logger.info('[RAG Mode] Routing to aiRouter...');
-
-  // 1. --- (Legacy) Check for Roadmap ---
-  const { inferRoleSlug } = await import('../utils/nlu.js');
-  const Roadmap = (await import('../models/Roadmap.js')).default;
-
-  const lang = detectLanguage(message);
-  const roleSlug = inferRoleSlug(message);
-
-  if (roleSlug) {
-    const roadmap = await Roadmap.findOne({ role_slug: roleSlug, language: lang });
-    if (roadmap) {
-      const responsePayload = { type: 'roadmap', data: roadmap, lang: lang };
-      await updateMemory(conversationId, { role: 'user', content: message });
-      await updateMemory(conversationId, { role: 'bot', content: responsePayload });
-      // Send response in 'text' format for frontend
-      return res.json({ text: responsePayload, conversationId });
-    }
-  }
-
-  // 2. --- (Legacy) Call old AI Router (aiRouter.js) ---
-  // This router now uses the new, strong prompt from promptTemplate.js
-  const aiResult = await routeRequest(message, conversationId);
-  const sanitizedResponse = sanitizeOutput(aiResult.text);
-
-  // We still use updateMemory here, as the old controller did
-  await updateMemory(conversationId, { role: 'user', content: message });
-  await updateMemory(conversationId, { role: 'bot', content: sanitizedResponse });
-
-  // Send response in 'text' format for frontend
-  res.json({
-    text: sanitizedResponse,
-    conversationId: conversationId,
-  });
-});
-
-export { getAIResponse };
+export async function health(req, res) {
+  res.json({ ok: true, ts: Date.now(), restrict: RESTRICT_MODE });
+}
