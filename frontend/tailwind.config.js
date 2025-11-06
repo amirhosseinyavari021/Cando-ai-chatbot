@@ -45,7 +45,8 @@ export default {
         },
       },
       maxWidth: {
-        '3xl': '72rem',
+        // UI MOD: Changed 3xl from 72rem to 56rem for a more balanced chat layout
+        '3xl': '56rem',
       },
       keyframes: {
         typing: {

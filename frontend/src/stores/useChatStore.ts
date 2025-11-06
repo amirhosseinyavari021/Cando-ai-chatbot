@@ -1,88 +1,173 @@
-// frontend/src/stores/useChatStore.ts
-import { create } from "zustand";
-import { v4 as uuidv4 } from "uuid";
-import { sendMessage } from "@/api/apiService";
-import { toast } from "react-hot-toast";
+import { create } from 'zustand'
+import { v4 as uuidv4 } from 'uuid'
+import { streamChatResponse } from '../api/apiService'
+import { toast } from 'react-hot-toast'
 
 export interface ChatMessage {
-  id: string;
-  sender: "user" | "bot";
-  text: string;
-  timestamp: number;
+  id: string
+  role: 'user' | 'assistant'
+  text: string
+  createdAt: number
+  error?: string | null
+  isStreaming?: boolean
 }
 
-interface ChatStore {
-  messages: ChatMessage[];
-  isLoading: boolean;
-  isStreaming: boolean;
-  send: (text: string) => Promise<void>;
-  reset: () => void;
-  stopGenerating: () => void;
-  regenerateLastResponse: () => void;
+interface ChatState {
+  messages: ChatMessage[]
+  sessionId: string
+  isLoading: boolean
+  isStreaming: boolean
+  error: string | null
+  abortController: AbortController | null
+
+  addMessage: (message: ChatMessage) => void
+  updateStreamingMessage: (chunk: string) => void
+  finishStreamingMessage: () => void
+  setErrorOnMessage: (messageId: string, error: string) => void
+  startNewSession: () => void
+  sendMessage: (text: string) => Promise<void>
+  stopGenerating: () => void
+  regenerateLastResponse: () => Promise<void>
 }
 
-export const useChatStore = create<ChatStore>((set, get) => ({
+const createMessage = (text: string, role: 'user' | 'assistant' = 'user'): ChatMessage => ({
+  id: uuidv4(),
+  role,
+  text,
+  createdAt: Date.now(),
+})
+
+export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
+  sessionId: uuidv4(),
   isLoading: false,
   isStreaming: false,
+  error: null,
+  abortController: null,
 
-  send: async (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) {
-      toast.error("پیام نمی‌تواند خالی باشد.");
-      return;
-    }
-
-    const userMessage: ChatMessage = {
-      id: uuidv4(),
-      sender: "user",
-      text: trimmed,
-      timestamp: Date.now(),
-    };
-
+  addMessage: (message) => {
     set((state) => ({
-      messages: [...state.messages, userMessage],
-      isLoading: true,
-      isStreaming: true,
-    }));
+      messages: [...state.messages, message].slice(-200),
+    }))
+  },
 
-    try {
-      const response = await sendMessage(trimmed, "web-client");
-      if (response?.ok && response?.result) {
-        const botMessage: ChatMessage = {
-          id: uuidv4(),
-          sender: "bot",
-          text: response.result,
-          timestamp: Date.now(),
-        };
-        set((state) => ({
-          messages: [...state.messages, botMessage],
-          isLoading: false,
-          isStreaming: false,
-        }));
-      } else {
-        toast.error(response?.error || "پاسخی از سرور دریافت نشد.");
-        set({ isLoading: false, isStreaming: false });
-      }
-    } catch (err: any) {
-      console.error("❌ Chat send() error:", err);
-      toast.error("ارتباط با سرور برقرار نشد");
-      set({ isLoading: false, isStreaming: false });
-    }
+  updateStreamingMessage: (chunk) => {
+    set((state) => ({
+      messages: state.messages.map((m) => (m.isStreaming ? { ...m, text: m.text + chunk } : m)),
+    }))
+  },
+
+  finishStreamingMessage: () => {
+    set((state) => ({
+      isStreaming: false,
+      isLoading: false,
+      abortController: null,
+      messages: state.messages.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)),
+    }))
+  },
+
+  setErrorOnMessage: (messageId, error) => {
+    set((state) => ({
+      isStreaming: false,
+      isLoading: false,
+      abortController: null,
+      messages: state.messages.map((m) => (m.id === messageId ? { ...m, error, isStreaming: false } : m)),
+    }))
+  },
+
+  startNewSession: () => {
+    get().stopGenerating()
+    set({
+      messages: [],
+      sessionId: uuidv4(),
+      error: null,
+      isLoading: false,
+      isStreaming: false,
+    })
+    // Translated toast
+    toast.success('New chat started')
   },
 
   stopGenerating: () => {
-    set({ isStreaming: false, isLoading: false });
-  },
-
-  regenerateLastResponse: () => {
-    const messages = get().messages;
-    if (messages.length < 2) return;
-    const lastUserMessage = [...messages].reverse().find((m) => m.sender === "user");
-    if (lastUserMessage) {
-      get().send(lastUserMessage.text);
+    const { abortController, isStreaming } = get()
+    if (abortController && isStreaming) {
+      abortController.abort()
+      set({
+        isStreaming: false,
+        isLoading: false,
+        abortController: null,
+        // Translated fallback text
+        messages: get().messages.map((m) => (m.isStreaming ? { ...m, isStreaming: false, text: m.text || 'Stopped.' } : m)),
+      })
+      // Translated toast
+      toast('Response generation stopped.')
     }
   },
 
-  reset: () => set({ messages: [] }),
-}));
+  sendMessage: async (text) => {
+    const { sessionId, addMessage, stopGenerating, regenerateLastResponse } = get()
+
+    if (text.trim() === '/retry') {
+      await regenerateLastResponse()
+      return
+    }
+    if (text.trim() === '/new') {
+      get().startNewSession()
+      return
+    }
+
+    stopGenerating()
+
+    const userMessage = createMessage(text, 'user')
+    addMessage(userMessage)
+
+    const assistantMessageId = uuidv4()
+    addMessage({
+      id: assistantMessageId,
+      role: 'assistant',
+      text: '',
+      createdAt: Date.now(),
+      isStreaming: true,
+    })
+
+    const controller = new AbortController()
+    set({ isLoading: true, isStreaming: true, abortController: controller, error: null })
+
+    try {
+      const stream = await streamChatResponse({ text, sessionId, signal: controller.signal })
+      const reader = stream.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value)
+        get().updateStreamingMessage(chunk)
+      }
+
+      get().finishStreamingMessage()
+    } catch (err: any) {
+      if (err && err.name === 'AbortError') return
+      // Translated error messages
+      let errorMessage = 'Error connecting to the server. (Code: 500)'
+      if (err && ('' + err.message).includes('401')) errorMessage = 'Invalid access. (Code: 401)'
+      if (err && ('' + err.message).includes('403')) errorMessage = 'Access forbidden. (Code: 403)'
+      if (err && ('' + err.message).includes('404')) errorMessage = 'API route not found. (Code: 404)'
+      toast.error(errorMessage)
+      get().setErrorOnMessage(assistantMessageId, errorMessage)
+    }
+  },
+
+  regenerateLastResponse: async () => {
+    const { messages, sendMessage, stopGenerating } = get()
+    stopGenerating()
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+    if (!lastUser) return
+    const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
+    let keep = messages
+    if (lastAssistant) keep = keep.filter((m) => m.id !== lastAssistant.id)
+    keep = keep.filter((m) => m.id !== lastUser.id)
+    set({ messages: keep })
+    await sendMessage(lastUser.text)
+  },
+}))
