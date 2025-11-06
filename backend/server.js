@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
-import { sendChat, health } from "./controllers/aiController.js"; // ✅ مسیر درست بدون src
+import { sendChat, health } from "./controllers/aiController.js"; // ← قطعی: بدون /src
 
 const app = express();
 
@@ -10,13 +10,13 @@ app.use(cors());
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
 
-// 🩺 Health route
+// Health
 app.get("/api/ai/health", health);
 
-// 🤖 Main chat route
+// Main chat route
 app.post("/api/ai/chat", sendChat);
 
-// 🪧 404 fallback
+// JSON 404 fallback
 app.use((req, res) => {
   res.status(404).json({
     ok: false,
