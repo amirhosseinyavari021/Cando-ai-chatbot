@@ -11,6 +11,9 @@ export async function sendChat(req, res) {
     if (text.includes("شبکه")) {
       answer =
         "برای مهندس شبکه شدن بهتره از دوره‌های Network+ و CCNA شروع کنی. بعدش سراغ CCNP، MikroTik و Fortinet برو.";
+    } else if (text.includes("DevOps") || text.includes("دواپس")) {
+      answer =
+        "برای شروع DevOps از Linux، Networking، Git، Docker و CI/CD شروع کن، بعد برو سراغ Kubernetes و Cloud.";
     } else {
       answer = `شما گفتید: ${text}`;
     }
