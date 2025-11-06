@@ -1,173 +1,62 @@
-import { create } from 'zustand'
-import { v4 as uuidv4 } from 'uuid'
-import { streamChatResponse } from '../api/apiService'
-import { toast } from 'react-hot-toast'
+// frontend/src/stores/useChatStore.ts
+import { create } from "zustand";
+import { sendChatOnce } from "@/api/apiService";
+
+export type Role = "user" | "assistant" | "system" | "error";
 
 export interface ChatMessage {
-  id: string
-  role: 'user' | 'assistant'
-  text: string
-  createdAt: number
-  error?: string | null
-  isStreaming?: boolean
+  id: string;
+  role: Role;
+  text: string;
+  createdAt: number;
 }
 
 interface ChatState {
-  messages: ChatMessage[]
-  sessionId: string
-  isLoading: boolean
-  isStreaming: boolean
-  error: string | null
-  abortController: AbortController | null
-
-  addMessage: (message: ChatMessage) => void
-  updateStreamingMessage: (chunk: string) => void
-  finishStreamingMessage: () => void
-  setErrorOnMessage: (messageId: string, error: string) => void
-  startNewSession: () => void
-  sendMessage: (text: string) => Promise<void>
-  stopGenerating: () => void
-  regenerateLastResponse: () => Promise<void>
+  messages: ChatMessage[];
+  sending: boolean;
+  sendMessage: (text: string) => Promise<void>;
+  reset: () => void;
 }
 
-const createMessage = (text: string, role: 'user' | 'assistant' = 'user'): ChatMessage => ({
-  id: uuidv4(),
-  role,
-  text,
-  createdAt: Date.now(),
-})
+function mkId() {
+  return Math.random().toString(36).slice(2);
+}
 
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
-  sessionId: uuidv4(),
-  isLoading: false,
-  isStreaming: false,
-  error: null,
-  abortController: null,
+  sending: false,
 
-  addMessage: (message) => {
-    set((state) => ({
-      messages: [...state.messages, message].slice(-200),
-    }))
-  },
+  reset: () => set({ messages: [] }),
 
-  updateStreamingMessage: (chunk) => {
-    set((state) => ({
-      messages: state.messages.map((m) => (m.isStreaming ? { ...m, text: m.text + chunk } : m)),
-    }))
-  },
-
-  finishStreamingMessage: () => {
-    set((state) => ({
-      isStreaming: false,
-      isLoading: false,
-      abortController: null,
-      messages: state.messages.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)),
-    }))
-  },
-
-  setErrorOnMessage: (messageId, error) => {
-    set((state) => ({
-      isStreaming: false,
-      isLoading: false,
-      abortController: null,
-      messages: state.messages.map((m) => (m.id === messageId ? { ...m, error, isStreaming: false } : m)),
-    }))
-  },
-
-  startNewSession: () => {
-    get().stopGenerating()
-    set({
-      messages: [],
-      sessionId: uuidv4(),
-      error: null,
-      isLoading: false,
-      isStreaming: false,
-    })
-    // Translated toast
-    toast.success('New chat started')
-  },
-
-  stopGenerating: () => {
-    const { abortController, isStreaming } = get()
-    if (abortController && isStreaming) {
-      abortController.abort()
-      set({
-        isStreaming: false,
-        isLoading: false,
-        abortController: null,
-        // Translated fallback text
-        messages: get().messages.map((m) => (m.isStreaming ? { ...m, isStreaming: false, text: m.text || 'Stopped.' } : m)),
-      })
-      // Translated toast
-      toast('Response generation stopped.')
-    }
-  },
-
-  sendMessage: async (text) => {
-    const { sessionId, addMessage, stopGenerating, regenerateLastResponse } = get()
-
-    if (text.trim() === '/retry') {
-      await regenerateLastResponse()
-      return
-    }
-    if (text.trim() === '/new') {
-      get().startNewSession()
-      return
-    }
-
-    stopGenerating()
-
-    const userMessage = createMessage(text, 'user')
-    addMessage(userMessage)
-
-    const assistantMessageId = uuidv4()
-    addMessage({
-      id: assistantMessageId,
-      role: 'assistant',
-      text: '',
+  sendMessage: async (text: string) => {
+    const userMsg: ChatMessage = {
+      id: mkId(),
+      role: "user",
+      text,
       createdAt: Date.now(),
-      isStreaming: true,
-    })
+    };
 
-    const controller = new AbortController()
-    set({ isLoading: true, isStreaming: true, abortController: controller, error: null })
+    set((s) => ({ messages: [...s.messages, userMsg], sending: true }));
 
-    try {
-      const stream = await streamChatResponse({ text, sessionId, signal: controller.signal })
-      const reader = stream.getReader()
-      const decoder = new TextDecoder()
+    const result = await sendChatOnce(text).catch(() => ({ ok: false as const, message: "NETWORK_ERROR" }));
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const chunk = decoder.decode(value)
-        get().updateStreamingMessage(chunk)
-      }
-
-      get().finishStreamingMessage()
-    } catch (err: any) {
-      if (err && err.name === 'AbortError') return
-      // Translated error messages
-      let errorMessage = 'Error connecting to the server. (Code: 500)'
-      if (err && ('' + err.message).includes('401')) errorMessage = 'Invalid access. (Code: 401)'
-      if (err && ('' + err.message).includes('403')) errorMessage = 'Access forbidden. (Code: 403)'
-      if (err && ('' + err.message).includes('404')) errorMessage = 'API route not found. (Code: 404)'
-      toast.error(errorMessage)
-      get().setErrorOnMessage(assistantMessageId, errorMessage)
+    if (result.ok) {
+      const botMsg: ChatMessage = {
+        id: mkId(),
+        role: "assistant",
+        text: result.text, // SAFE: ensured by apiService
+        createdAt: Date.now(),
+      };
+      set((s) => ({ messages: [...s.messages, botMsg], sending: false }));
+    } else {
+      // show a single error message; do not loop on fallback
+      const errMsg: ChatMessage = {
+        id: mkId(),
+        role: "error",
+        text: result.message || "Request failed",
+        createdAt: Date.now(),
+      };
+      set((s) => ({ messages: [...s.messages, errMsg], sending: false }));
     }
   },
-
-  regenerateLastResponse: async () => {
-    const { messages, sendMessage, stopGenerating } = get()
-    stopGenerating()
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user')
-    if (!lastUser) return
-    const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
-    let keep = messages
-    if (lastAssistant) keep = keep.filter((m) => m.id !== lastAssistant.id)
-    keep = keep.filter((m) => m.id !== lastUser.id)
-    set({ messages: keep })
-    await sendMessage(lastUser.text)
-  },
-}))
+}));

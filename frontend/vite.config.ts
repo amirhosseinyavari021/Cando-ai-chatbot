@@ -1,22 +1,15 @@
-import path from 'path'
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
+// In dev, we proxy /api → backend. In prod, Nginx must proxy /api to backend.
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
-  // FIX: Added server proxy configuration
   server: {
     proxy: {
-      // Proxies any request starting with /api to the backend server
-      '/api': {
-        target: 'http://localhost:5000', // Assumes your backend runs on port 5000
-        changeOrigin: true, // Recommended for virtual hosts
+      "/api": {
+        target: "http://localhost:5001", // keep consistent with backend PORT
+        changeOrigin: true,
       },
     },
   },
-})
+});

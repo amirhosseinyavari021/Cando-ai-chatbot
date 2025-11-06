@@ -1,67 +1,33 @@
-import { toast } from 'react-hot-toast'
+// frontend/src/api/apiService.ts
+type ChatResponse = { ok: true; text: string } | { ok: false; message?: string; error?: string }
 
-// Use the VITE_API_BASE_URL, default to /api
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
-interface SendMessageParams {
-  text: string
-  sessionId: string
-  signal: AbortSignal
-}
+export async function sendChatOnce(text: string, signal?: AbortSignal): Promise<ChatResponse> {
+  const url = `${API_BASE_URL}/ai/chat`;
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal,
+      body: JSON.stringify({ text }),
+    });
 
-export const streamChatResponse = async ({ text, sessionId, signal }: SendMessageParams): Promise<ReadableStream<Uint8Array>> => {
-  // FIX: Ensure endpoint is /ai/chat to match backend routes and error log
-  const response = await fetch(`${API_BASE_URL}/ai/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, sessionId }),
-    signal,
-  })
-
-  // FIX: Check if the response was successful. This catches 404s, 500s, etc.
-  if (!response.ok) {
-    throw new Error(`API request failed with status ${response.status}`)
-  }
-
-  // FIX: The backend sends JSON, not a stream. We parse the JSON response.
-  const data = await response.json()
-
-  // FIX: Safely access 'data.text' to prevent the TypeError
-  // If data or data.text is undefined, provide a fallback message.
-  const responseText = (data && typeof data.text === 'string')
-    ? data.text
-    : 'Sorry, I received an invalid response from the server.'
-
-  // Simulate a streaming response from the complete JSON text
-  const simulated = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const encoder = new TextEncoder()
-      const words = String(responseText).split(' ')
-      for (const w of words) {
-        // Reduced delay for a faster-feeling response
-        await new Promise((r) => setTimeout(r, 20))
-        controller.enqueue(encoder.encode(w + ' '))
-      }
-      controller.close()
-    },
-  })
-  return simulated
-}
-
-// Online/offline toasts (Translated to English)
-let offlineId: string | undefined
-if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    if (offlineId) {
-      toast.dismiss(offlineId)
-      offlineId = undefined
+    // Non-2xx: try to parse error body, but always return {ok:false}
+    if (!resp.ok) {
+      let errBody: any = null;
+      try { errBody = await resp.json(); } catch {}
+      return { ok: false, message: errBody?.message || `HTTP_${resp.status}` };
     }
-    toast.success('You are back online!')
-  })
-  window.addEventListener('offline', () => {
-    offlineId = toast.error('You are offline. Messages will be sent upon reconnection.', {
-      id: 'offline-toast',
-      duration: Infinity,
-    }) as unknown as string
-  })
+
+    // 2xx: parse and validate
+    const data: any = await resp.json();
+    if (data && typeof data.text === "string") {
+      return { ok: true, text: data.text };
+    }
+    return { ok: false, message: "BAD_RESPONSE_SHAPE" };
+  } catch (e: any) {
+    const aborted = e?.name === "AbortError";
+    return { ok: false, message: aborted ? "ABORTED" : "NETWORK_ERROR" };
+  }
 }

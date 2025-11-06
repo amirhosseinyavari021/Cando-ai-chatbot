@@ -1,14 +1,12 @@
-import express from 'express';
-import asyncHandler from 'express-async-handler';
-const router = express.Router();
+// backend/routes/aiRoutes.js
+import { Router } from "express";
+import { sendChat, health } from "../controllers/aiController.js";
 
-// FIX: ایمپورت نام تابع صحیحی که در کنترلر وجود دارد
-import { getAIResponse } from '../controllers/aiController.js';
+const router = Router();
 
-// روت اصلی چت که توسط aiController.js (شامل roadmap) مدیریت می‌شود
-router.route('/chat').post(asyncHandler(getAIResponse));
-
-// روت قدیمی 'ask' را نیز به کنترلر جدید هدایت می‌کنیم
-router.route('/ask').post(asyncHandler(getAIResponse));
+// Canonical and legacy-compatible routes
+router.post("/chat", sendChat);
+router.post("/ask", sendChat);
+router.get("/health", health);
 
 export default router;
