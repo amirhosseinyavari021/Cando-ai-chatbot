@@ -1,32 +1,26 @@
-import "dotenv/config";
+// backend/server.js
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
-import morgan from "morgan";
-import { sendChat, health } from "./controllers/aiController.js"; // ✅ مسیر صحیح بدون /src
+
+import { handleChat, handleChatStream, health } from "./controllers/aiController.js";
 
 const app = express();
+const PORT = parseInt(process.env.PORT || "5001", 10);
 
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: "1mb" }));
-app.use(morgan("dev"));
 
-// Health check
-app.get("/api/ai/health", health);
+// Routes
+app.get("/api/health", health);
+app.post("/api/ai/chat", handleChat);
+app.post("/api/ai/chat/stream", handleChatStream);
 
-// Main chatbot route
-app.post("/api/ai/chat", sendChat);
-
-// 404 fallback
-app.use((req, res) => {
-  res.status(404).json({
-    ok: false,
-    message: `Route not found: ${req.method} ${req.originalUrl}`,
-  });
-});
-
-const PORT = process.env.PORT || 5001;
-
+// Start
 app.listen(PORT, () => {
-  console.log(`🚀 Cando Chatbot backend running on port ${PORT}`);
+  console.log("🚀 Cando Chatbot backend running on port " + PORT);
   console.log("✅ Ready: POST /api/ai/chat");
+  console.log("✅ Ready: POST /api/ai/chat/stream (SSE)");
 });

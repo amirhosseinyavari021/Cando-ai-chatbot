@@ -1,14 +1,8 @@
+// frontend/src/App.tsx
 import React from "react";
-import { MessageList } from "@/components/MessageList";
-import { Composer } from "@/components/Composer";
+import Chat from "@/components/Chat";
+import "@/index.css";
 
-function App() {
-  return (
-    <div className="flex flex-col h-screen bg-background text-text-default">
-      <MessageList />
-      <Composer />
-    </div>
-  );
+export default function App() {
+  return <Chat />;
 }
-
-export default App;
