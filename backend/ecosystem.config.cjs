@@ -1,18 +1,36 @@
+// ecosystem.config.cjs
+// ✅ Auto-load .env file so PM2 sees your API keys and MongoDB credentials
+require("dotenv").config({ path: "/var/www/cando-chatbot/Cando-ai-chatbot/backend/.env" });
+
 module.exports = {
   apps: [
     {
       name: "cando-backend",
       script: "server.js",
       cwd: "/var/www/cando-chatbot/Cando-ai-chatbot/backend",
+
+      // این بخش از فایل .env خونده میشه
       env: {
-        NODE_ENV: "development",
-        PORT: 5001,
-        OPENAI_API_KEY: "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",
-        OPENROUTER_API_KEY: "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",
-        DATABASE_URL: "mongodb://cando_chatbot_user:DbCanD0AY@127.0.0.1:27017/cando-ai-db?authSource=cando-ai-db",
-        JWT_SECRET: "YOUR_VERY_SECURE_AND_RANDOM_SECRET_KEY",
-        OLLAMA_BASE_URL: "http://localhost:11434"
-      }
-    }
-  ]
+        NODE_ENV: process.env.NODE_ENV || "production",
+        PORT: process.env.PORT || 5001,
+        MONGODB_URI: process.env.MONGODB_URI,
+        LOG_LEVEL: process.env.LOG_LEVEL,
+
+        // AI Configuration
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+        OPENAI_API_URL: process.env.OPENAI_API_URL,
+        AI_PRIMARY_MODEL: process.env.AI_PRIMARY_MODEL,
+        AI_PRIMARY_PROMPT_ID: process.env.AI_PRIMARY_PROMPT_ID,
+
+        // Fallback
+        AI_FALLBACK_ENABLED: process.env.AI_FALLBACK_ENABLED,
+        AI_LOCAL_MODEL_URL: process.env.AI_LOCAL_MODEL_URL,
+        AI_LOCAL_MODEL_NAME: process.env.AI_LOCAL_MODEL_NAME,
+
+        // Behavior
+        AI_TIMEOUT_MS: process.env.AI_TIMEOUT_MS,
+        RESTRICT_MODE: process.env.RESTRICT_MODE,
+      },
+    },
+  ],
 };
