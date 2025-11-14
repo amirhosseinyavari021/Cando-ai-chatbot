@@ -1,110 +1,86 @@
 // backend/controllers/aiController.js
-import { Readable } from "node:stream";
+import fetch from "node-fetch";
 
-// اگر کلاینت OpenAI داری از همون فایل/ماژولت ایمپورتش کن.
-// اینجا ایمن می‌نویسم که اگر Key نبود، graceful رفتار کنیم.
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
-
-/** سلامت سرویس */
 export function health(req, res) {
-  res.json({ ok: true, ts: Date.now() });
+  res.json({ ok: true, service: "cando-backend", ts: Date.now() });
 }
 
-/** پاسخ نُرمال بدون استریم */
+function hasOpenAI() {
+  return !!process.env.OPENAI_API_KEY;
+}
+
 export async function handleChat(req, res) {
   try {
-    const { messages } = req.body || {};
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: "messages array required" });
+    const { sessionId = "web-session" } = req.body || {};
+    let { message, history = [] } = req.body || {};
+
+    if ((!message || typeof message !== "string") && Array.isArray(req.body?.messages)) {
+      const msgs = req.body.messages;
+      const lastUser = [...msgs].reverse().find(m => m?.role === "user" && typeof m?.content === "string");
+      message = lastUser?.content || "";
+      history = msgs.map(m => ({ role: m.role, content: m.content }));
+    }
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ ok: false, error: "Invalid message (need 'message' or 'messages[]')" });
     }
 
-    // اگر کلید نیست، حداقل جواب بده که Front شکست نخوره
-    if (!OPENAI_API_KEY) {
-      return res.status(503).json({
-        error: "OPENAI_API_KEY missing",
-        message:
-          "Service temporarily unavailable (no OPENAI key). Streaming disabled.",
-      });
+    if (!hasOpenAI()) {
+      return res.json({ ok: true, sessionId, reply: "No response from OpenAI." });
     }
 
-    // ----- اینجا لایه واقعی فراخوانی مدل رو بگذار -----
-    // نمونه‌ی ساده (غیر استریم) — خودت با کلاینتت جایگزین کن
-    const last = messages[messages.length - 1]?.content || "";
-    const reply = `سلام! پیام شما دریافت شد: «${last}».`;
-
-    return res.json({
-      role: "assistant",
-      content: reply,
-    });
-  } catch (err) {
-    console.error("handleChat error:", err);
-    return res.status(500).json({ error: "internal_error" });
+    // TODO: اینجا کال واقعی OpenAI
+    return res.json({ ok: true, sessionId, reply: "TEMP: OpenAI call not implemented" });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ ok: false, error: e.message || "Server error" });
   }
 }
 
-/** پاسخ استریم (SSE) */
 export async function handleChatStream(req, res) {
   try {
-    const { messages } = req.body || {};
-    if (!Array.isArray(messages) || messages.length === 0) {
-      res.writeHead(400, {
-        "Content-Type": "text/plain; charset=utf-8",
-        Connection: "keep-alive",
-        "Cache-Control": "no-cache",
-      });
-      return res.end("messages array required");
+    const { sessionId = "web-session" } = req.body || {};
+    let { message, history = [] } = req.body || {};
+
+    if ((!message || typeof message !== "string") && Array.isArray(req.body?.messages)) {
+      const msgs = req.body.messages;
+      const lastUser = [...msgs].reverse().find(m => m?.role === "user" && typeof m?.content === "string");
+      message = lastUser?.content || "";
+      history = msgs.map(m => ({ role: m.role, content: m.content }));
+    }
+    if (!message || typeof message !== "string") {
+      res.status(400);
+      return res.end('event: error\ndata: {"error":"Invalid message (need message or messages[]"}\n\n');
     }
 
-    // هدرهای SSE
-    res.writeHead(200, {
-      "Content-Type": "text/event-stream; charset=utf-8",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "X-Accel-Buffering": "no",
-    });
-    // برای nginx قدیمی:
-    // res.flushHeaders?.();
+    res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
 
-    // اگر کلید نیست، به‌صورت امن یک استریم ساختگی می‌فرستیم تا فرانت نخوابه
-    if (!OPENAI_API_KEY) {
-      const fake = [
-        "سرویس موقتاً بدون کلید OpenAI است.",
-        "برای تست استریم، این پیام ساختگی ارسال شد.",
-        "وقتی کلید ست شد، جریان واقعی فعال می‌شود.",
-      ];
-      for (const chunk of fake) {
-        res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
-        await new Promise((r) => setTimeout(r, 200));
-      }
-      res.write("event: done\ndata: [DONE]\n\n");
+    const write = (obj, event) => {
+      if (event) res.write(`event: ${event}\n`);
+      res.write(`data: ${JSON.stringify(obj)}\n\n`);
+    };
+
+    if (!hasOpenAI()) {
+      write({ content: "سرویس موقتا بدون کلید OpenAI است." });
+      write({ content: "پیام ساختگی برای تست استریم." });
+      write({ content: "وقتی کلید ست شد، جریان واقعی فعال می‌شود." });
+      res.write("event: done\n");
+      res.write("data: [DONE]\n\n");
       return res.end();
     }
 
-    // ----- اینجا استریم واقعی مدل رو پیاده کن -----
-    // جهت تست پایدار، همین استریم ساختگی رو نگه داریم.
-    const last = messages[messages.length - 1]?.content || "";
-    const tokens = [
-      "سلام! ",
-      "من چت‌بات کَندو هستم. ",
-      "پیام شما: ",
-      `«${last}». `,
-      "استریم OK ✅",
-    ];
-    for (const t of tokens) {
-      res.write(`data: ${JSON.stringify({ content: t })}\n\n`);
-      await new Promise((r) => setTimeout(r, 80));
-    }
-    res.write("event: done\ndata: [DONE]\n\n");
-    res.end();
-  } catch (err) {
-    console.error("handleChatStream error:", err);
-    // به‌جای 502 (که NGINX ممکنه بد تفسیر کنه)، استریم را با پیام خطا ببند:
+    // TODO: استریم واقعی OpenAI
+    write({ content: "TEMP streaming..." });
+    res.write("event: done\n");
+    res.write("data: [DONE]\n\n");
+    return res.end();
+  } catch (e) {
+    console.error(e);
     try {
-      res.write(`event: error\ndata: ${JSON.stringify({ error: "stream_error" })}\n\n`);
-      res.write("event: done\ndata: [DONE]\n\n");
-      res.end();
-    } catch (_) {
-      // اگر همین هم نشد، فقط سوکت بسته می‌شود.
-    }
+      res.write(`event: error\ndata: ${JSON.stringify({ error: e.message || "stream error" })}\n\n`);
+    } catch {}
+    return res.end();
   }
 }
